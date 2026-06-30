@@ -713,7 +713,7 @@ function initMalaysiaCanvasMap() {
 
   // Load the custom map image
   const mapImg = new Image();
-  mapImg.src = '/public/malaysia-map.svg';
+  mapImg.src = './public/malaysia-map.svg';
   let imageLoaded = false;
   mapImg.onload = () => {
     imageLoaded = true;
