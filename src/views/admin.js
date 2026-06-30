@@ -587,7 +587,7 @@ function initMalaysiaCanvasMap() {
 
   // Load the custom map image
   const mapImg = new Image();
-  mapImg.src = '/public/malaysia-map.png';
+  mapImg.src = '/public/malaysia-map.svg';
   let imageLoaded = false;
   mapImg.onload = () => {
     imageLoaded = true;
@@ -617,8 +617,8 @@ function initMalaysiaCanvasMap() {
     // 2. Draw Malaysia map image
     if (imageLoaded) {
       ctx.save();
-      // Sleek inversion filter to make the dark map elements light up on the dark background
-      ctx.filter = 'invert(1) opacity(0.3)';
+      // Sleek opacity filter to blend the sage-green vector SVG with the dark dashboard background
+      ctx.filter = 'brightness(1.2) opacity(0.25)';
       ctx.drawImage(mapImg, 0, 0, w, h);
       ctx.restore();
     }
