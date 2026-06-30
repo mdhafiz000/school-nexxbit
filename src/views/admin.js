@@ -240,20 +240,20 @@ export function renderAdminPanel() {
     <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:0.75rem; margin-bottom: 1.25rem;">
       
       <!-- Malaysia Map Canvas Card -->
-      <div class="card" style="display:flex; flex-direction:column; align-items:center; min-height:360px; position:relative; padding: 0.75rem; border-radius:2px;">
+      <div class="card" style="display:flex; flex-direction:column; align-items:center; min-height:260px; position:relative; padding: 0.75rem; border-radius:2px;">
         <div style="width:100%; text-align:left; margin-bottom: 0.5rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:0.35rem;">
           <span style="font-size:0.75rem; font-weight:800; font-family:monospace; text-transform:uppercase; letter-spacing:0.05em;">SYS_MAP_FEED_MALAYSIA</span>
           <span class="user-badge" style="background:rgba(16,185,129,0.1); color:var(--success); font-family:monospace; font-size:0.65rem; border:1px solid rgba(16,185,129,0.3); padding:0.1rem 0.4rem;">LIVE</span>
         </div>
-        <canvas id="malaysia-canvas-map" width="550" height="290" style="background: rgba(15, 23, 42, 0.6); border-radius:2px; border:1px solid var(--border-color); width:100%; max-width:550px;"></canvas>
+        <canvas id="malaysia-canvas-map" width="550" height="183" style="background: rgba(15, 23, 42, 0.6); border-radius:2px; border:1px solid var(--border-color); width:100%; max-width:550px;"></canvas>
       </div>
 
       <!-- Live Activities Ticker List -->
-      <div class="card" style="display:flex; flex-direction:column; padding: 0.75rem; border-radius:2px;">
+      <div class="card" style="display:flex; flex-direction:column; min-height:260px; padding: 0.75rem; border-radius:2px;">
         <div style="margin-bottom: 0.5rem; border-bottom:1px solid var(--border-color); padding-bottom:0.35rem;">
           <span style="font-size:0.75rem; font-weight:800; font-family:monospace; text-transform:uppercase; letter-spacing:0.05em;">SYS_ACTIVITY_LOG</span>
         </div>
-        <div id="admin-live-ticker-list" style="flex:1; overflow-y:auto; max-height:280px; display:flex; flex-direction:column; gap:0.15rem;">
+        <div id="admin-live-ticker-list" style="flex:1; overflow-y:auto; max-height:175px; display:flex; flex-direction:column; gap:0.15rem;">
           <div style="text-align:center; padding:2rem 0; color:var(--text-muted); font-size:0.75rem; font-family:monospace;">LISTENING_FOR_EVENTS...</div>
         </div>
       </div>
@@ -578,7 +578,6 @@ export function renderAdminPanel() {
   // Start Malaysia Canvas Draw Loop
   initMalaysiaCanvasMap();
 }
-
 function initMalaysiaCanvasMap() {
   const canvas = document.getElementById('malaysia-canvas-map');
   if (!canvas) return;
@@ -586,30 +585,13 @@ function initMalaysiaCanvasMap() {
   const ctx = canvas.getContext('2d');
   let pulseRadius = 0;
 
-  // High-fidelity 2D vector coordinate path arrays tracing Malaysia outlines
-  const westPath = [
-    {x: 0.28, y: 0.16}, {x: 0.32, y: 0.18}, {x: 0.35, y: 0.21},
-    {x: 0.37, y: 0.23}, {x: 0.39, y: 0.28}, {x: 0.41, y: 0.38},
-    {x: 0.42, y: 0.47}, {x: 0.38, y: 0.63}, {x: 0.34, y: 0.73},
-    {x: 0.31, y: 0.77}, {x: 0.27, y: 0.76}, {x: 0.25, y: 0.71},
-    {x: 0.23, y: 0.62}, {x: 0.18, y: 0.54}, {x: 0.19, y: 0.45},
-    {x: 0.22, y: 0.33}, {x: 0.24, y: 0.22}
-  ];
-
-  const sarawakPath = [
-    {x: 0.50, y: 0.65}, {x: 0.55, y: 0.63}, {x: 0.61, y: 0.57},
-    {x: 0.65, y: 0.51}, {x: 0.70, y: 0.45}, {x: 0.75, y: 0.44},
-    {x: 0.77, y: 0.41}, {x: 0.76, y: 0.47}, {x: 0.73, y: 0.52},
-    {x: 0.70, y: 0.59}, {x: 0.65, y: 0.63}, {x: 0.58, y: 0.68},
-    {x: 0.52, y: 0.71}, {x: 0.49, y: 0.67}
-  ];
-
-  const sabahPath = [
-    {x: 0.77, y: 0.41}, {x: 0.80, y: 0.35}, {x: 0.82, y: 0.28},
-    {x: 0.87, y: 0.22}, {x: 0.89, y: 0.25}, {x: 0.92, y: 0.29},
-    {x: 0.90, y: 0.35}, {x: 0.88, y: 0.40}, {x: 0.84, y: 0.44},
-    {x: 0.81, y: 0.45}, {x: 0.78, y: 0.42}
-  ];
+  // Load the custom map image
+  const mapImg = new Image();
+  mapImg.src = '/public/malaysia-map.png';
+  let imageLoaded = false;
+  mapImg.onload = () => {
+    imageLoaded = true;
+  };
 
   function draw() {
     const w = canvas.width;
@@ -632,55 +614,30 @@ function initMalaysiaCanvasMap() {
       ctx.stroke();
     }
 
-    // 2. Draw West Malaysia high-fidelity vector silhouette
-    ctx.beginPath();
-    ctx.moveTo(w * westPath[0].x, h * westPath[0].y);
-    for (let i = 1; i < westPath.length; i++) {
-      ctx.lineTo(w * westPath[i].x, h * westPath[i].y);
+    // 2. Draw Malaysia map image
+    if (imageLoaded) {
+      ctx.save();
+      // Sleek inversion filter to make the dark map elements light up on the dark background
+      ctx.filter = 'invert(1) opacity(0.3)';
+      ctx.drawImage(mapImg, 0, 0, w, h);
+      ctx.restore();
     }
-    ctx.closePath();
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.45)'; // Indigo outline
-    ctx.fillStyle = 'rgba(99, 102, 241, 0.05)';
-    ctx.fill();
-    ctx.stroke();
 
-    // 3. Draw Sarawak high-fidelity vector silhouette
-    ctx.beginPath();
-    ctx.moveTo(w * sarawakPath[0].x, h * sarawakPath[0].y);
-    for (let i = 1; i < sarawakPath.length; i++) {
-      ctx.lineTo(w * sarawakPath[i].x, h * sarawakPath[i].y);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.45)'; // Green outline
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.05)';
-    ctx.fill();
-    ctx.stroke();
-
-    // 4. Draw Sabah high-fidelity vector silhouette
-    ctx.beginPath();
-    ctx.moveTo(w * sabahPath[0].x, h * sabahPath[0].y);
-    for (let i = 1; i < sabahPath.length; i++) {
-      ctx.lineTo(w * sabahPath[i].x, h * sabahPath[i].y);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)'; // Amber outline
-    ctx.fillStyle = 'rgba(245, 158, 11, 0.05)';
-    ctx.fill();
-    ctx.stroke();
-
-    // 5. Draw geographical labels
+    // 3. Draw geographical labels
     ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.font = '8px monospace';
-    ctx.fillText("WEST_MALAYSIA", w * 0.22, h * 0.50);
-    ctx.fillText("EAST_MALAYSIA", w * 0.72, h * 0.50);
+    ctx.fillText("WEST_MALAYSIA", w * 0.12, h * 0.65);
+    ctx.fillText("EAST_MALAYSIA", w * 0.65, h * 0.65);
 
-    // 6. Draw active sessions pulsing markers
+    // 4. Draw active sessions pulsing markers
     pulseRadius = (pulseRadius + 0.15) % 12;
 
     activeSessions.forEach(session => {
-      // Map Lat/Lng to Screen coordinate space
-      const x = w * 0.1 + ((session.lng - 99.5) / (120 - 99.5)) * (w * 0.8);
-      const y = h * 0.88 - ((session.lat - 1) / (7.5 - 1)) * (h * 0.76);
+      // Map Lat/Lng to 3:1 Map Coordinate Space
+      // Lng spans 99.5 to 119.5
+      const x = ((session.lng - 99.5) / (119.5 - 99.5)) * w;
+      // Lat spans 0.8 to 7.5
+      const y = h - ((session.lat - 0.8) / (7.5 - 0.8)) * h;
 
       // Determine color based on role
       let color = '#10b981'; // Student: Green
