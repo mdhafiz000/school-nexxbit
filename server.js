@@ -21,6 +21,50 @@ let pool = null;
 let useFallbackDb = false;
 const FALLBACK_DB_FILE = path.join(__dirname, 'db_fallback.json');
 
+const activeUsers = new Map();
+
+function trackUserActivity(req, activityName) {
+  if (!req.user || !req.user.username) return;
+  const username = req.user.username.toLowerCase();
+  
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+  let city = 'Kuala Lumpur';
+  let lat = 3.1390;
+  let lng = 101.6869;
+
+  let cleanIp = ip;
+  if (cleanIp.includes('::ffff:')) {
+    cleanIp = cleanIp.replace('::ffff:', '');
+  }
+
+  if (cleanIp && cleanIp !== '127.0.0.1' && cleanIp !== '::1' && !cleanIp.startsWith('192.168.') && !cleanIp.startsWith('10.')) {
+    try {
+      const geo = geoip.lookup(cleanIp);
+      if (geo) {
+        city = geo.city || geo.country || 'Malaysia';
+        if (geo.ll) {
+          lat = geo.ll[0];
+          lng = geo.ll[1];
+        }
+      }
+    } catch (e) {
+      console.error("GeoIP lookup failed:", e);
+    }
+  }
+
+  activeUsers.set(username, {
+    username: req.user.username,
+    name: req.user.name || req.user.username,
+    role: req.user.role,
+    city: city,
+    lat: lat,
+    lng: lng,
+    activity: activityName || 'navigating portal',
+    last_active: Date.now()
+  });
+}
+
+
 // Initialize Fallback DB with seed data if file doesn't exist
 function initFallbackDb() {
   const hashedPass = bcrypt.hashSync('abcd1234', 10);
@@ -531,6 +575,23 @@ function authenticateToken(req, res, next) {
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid or expired token' });
     req.user = user;
+    
+    // Track user activity
+    let activity = 'viewing dashboard';
+    const path = req.path;
+    if (path.includes('/quiz/submit') || path.includes('/playground/submit')) {
+      activity = 'submitting answers';
+    } else if (path.includes('/quiz') || path.includes('/playground')) {
+      activity = 'practicing exercises';
+    } else if (path.includes('/parent')) {
+      activity = 'viewing child dashboard';
+    } else if (path.includes('/teacher')) {
+      activity = 'reviewing classroom roster';
+    } else if (path.includes('/admin')) {
+      activity = 'checking admin console';
+    }
+    
+    trackUserActivity(req, activity);
     next();
   });
 }
@@ -655,6 +716,9 @@ app.post('/api/login', restrictToMalaysia, async (req, res) => {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    req.user = { username: user.username, role: user.role, name: user.name };
+    trackUserActivity(req, 'logging in');
 
     res.json({
       token,
@@ -1255,49 +1319,21 @@ app.post('/api/admin/users/update', authenticateToken, requireAdmin, async (req,
   }
 });
 
-// Active user sessions with live simulation coordinate data for Malaysian cities
+// Active user sessions with live coordinate data
 app.get('/api/admin/active-sessions', authenticateToken, requireAdmin, async (req, res) => {
-  const malaysianCities = [
-    { city: 'Kuala Lumpur', lat: 3.1390, lng: 101.6869 },
-    { city: 'Penang', lat: 5.4141, lng: 100.3288 },
-    { city: 'Johor Bahru', lat: 1.4854, lng: 103.7618 },
-    { city: 'Kuching', lat: 1.5533, lng: 110.3592 },
-    { city: 'Kota Kinabalu', lat: 5.9804, lng: 116.0735 },
-    { city: 'Ipoh', lat: 4.5921, lng: 101.0901 },
-    { city: 'Malacca', lat: 2.1896, lng: 102.2501 },
-    { city: 'Kuantan', lat: 3.8077, lng: 103.3260 }
-  ];
+  const now = Date.now();
+  const activeList = [];
+  
+  for (const [username, session] of activeUsers.entries()) {
+    // Keep sessions active if there was activity in the last 15 minutes
+    if (now - session.last_active < 15 * 60 * 1000) {
+      activeList.push(session);
+    } else {
+      activeUsers.delete(username);
+    }
+  }
 
-  const activities = [
-    'doing Multiplication practice',
-    'reviewing English vocabulary',
-    'answering Division questions',
-    'viewing reports',
-    'checking leaderboards'
-  ];
-
-  // Primary list with real and mock students
-  const mockSessions = [
-    { username: 'eilhan', name: 'Eilhan', role: 'student', city: 'Kuala Lumpur', lat: 3.1390, lng: 101.6869, activity: 'doing Multiplication practice' },
-    { username: 'ellysha', name: 'Ellysha', role: 'student', city: 'Penang', lat: 5.4141, lng: 100.3288, activity: 'doing English spelling' },
-    { username: 'hafiz', name: 'Hafiz', role: 'parent', city: 'Kuching', lat: 1.5533, lng: 110.3592, activity: 'viewing child dashboard' },
-    { username: 'veelai', name: 'Veelai', role: 'teacher', city: 'Johor Bahru', lat: 1.4854, lng: 103.7618, activity: 'reviewing classroom roster' }
-  ];
-
-  // Randomize a guest session dynamically to keep it active
-  const randomCity = malaysianCities[Math.floor(Math.random() * malaysianCities.length)];
-  const randomActivity = activities[Math.floor(Math.random() * activities.length)];
-  mockSessions.push({
-    username: 'guest_' + Math.floor(100 + Math.random() * 900),
-    name: 'Guest Student',
-    role: 'student',
-    city: randomCity.city,
-    lat: randomCity.lat,
-    lng: randomCity.lng,
-    activity: randomActivity
-  });
-
-  res.json(mockSessions);
+  res.json(activeList);
 });
 
 // Whitelisted Table Inspector Query Endpoint
