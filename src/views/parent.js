@@ -260,22 +260,42 @@ export async function renderParentDashboard() {
       }
     }
 
-    // Render Stats
-    const totalQuizzes = document.getElementById('parent-total-quizzes');
-    const avgAccuracy = document.getElementById('parent-avg-accuracy');
-    const childRank = document.getElementById('parent-child-rank');
-
-    if (totalQuizzes) totalQuizzes.textContent = history.length;
-    if (avgAccuracy) {
-      const sum = history.reduce((acc, q) => acc + q.accuracy, 0);
-      avgAccuracy.textContent = history.length > 0 ? `${Math.round(sum / history.length)}%` : '0%';
-    }
-    if (childRank) {
-      childRank.textContent = kid.xp > 3000 ? 'Champion' : kid.xp > 1500 ? 'Expert' : 'Novice';
+    // Render Performance Breakdown
+    const progressStats = document.getElementById('parent-progress-stats');
+    if (progressStats) {
+      progressStats.innerHTML = '';
+      const topicStats = {};
+      history.forEach(h => {
+        const cat = h.subject.toLowerCase() === 'math' ? 'Mathematics' : 'English Language';
+        if (!topicStats[cat]) {
+          topicStats[cat] = { sum: 0, count: 0 };
+        }
+        topicStats[cat].sum += h.accuracy;
+        topicStats[cat].count++;
+      });
+      const categories = ['Mathematics', 'English Language'];
+      categories.forEach(cat => {
+        const stat = topicStats[cat];
+        const acc = stat ? Math.round(stat.sum / stat.count) : 0;
+        
+        const row = document.createElement('div');
+        row.className = 'topic-stat-row';
+        row.style.marginBottom = '1rem';
+        row.innerHTML = `
+          <div class="topic-info-lbl" style="display:flex; justify-content:space-between; margin-bottom:0.25rem; font-size:0.85rem; font-weight:700;">
+            <span>${cat}</span>
+            <span>${acc > 0 ? acc + '%' : 'No practice yet'}</span>
+          </div>
+          <div class="bar-outer" style="background:var(--bg-secondary); border-radius:5px; height:8px; overflow:hidden;">
+            <div class="bar-inner" style="width: ${acc}%; height:100%; background: ${acc >= 85 ? 'var(--success)' : (acc >= 60 ? 'var(--warning)' : 'var(--danger)')};"></div>
+          </div>
+        `;
+        progressStats.appendChild(row);
+      });
     }
 
     // Render Progress History table
-    const tableBody = document.getElementById('parent-quiz-logs-body');
+    const tableBody = document.getElementById('parent-history-tbody');
     if (tableBody) {
       tableBody.innerHTML = '';
       if (history.length === 0) {
@@ -305,8 +325,8 @@ export async function renderParentDashboard() {
 }
 
 function drawParentCharts(history) {
-  const accCtx = document.getElementById('parent-accuracy-chart');
-  const anaCtx = document.getElementById('parent-subject-analysis-chart');
+  const accCtx = document.getElementById('parentAccuracyChart');
+  const anaCtx = document.getElementById('parentAnalysisChart');
   
   if (!accCtx || !anaCtx) return;
 
@@ -345,8 +365,9 @@ function drawParentCharts(history) {
   const subjectSums = {};
   const subjectCounts = {};
   history.forEach(q => {
-    subjectSums[q.subject] = (subjectSums[q.subject] || 0) + q.accuracy;
-    subjectCounts[q.subject] = (subjectCounts[q.subject] || 0) + 1;
+    const key = q.subject.toLowerCase() === 'math' ? 'Mathematics' : 'English Language';
+    subjectSums[key] = (subjectSums[key] || 0) + q.accuracy;
+    subjectCounts[key] = (subjectCounts[key] || 0) + 1;
   });
 
   const subjects = Object.keys(subjectCounts);

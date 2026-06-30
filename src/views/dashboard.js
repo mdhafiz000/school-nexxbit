@@ -216,8 +216,9 @@ export function renderStudentDashboard() {
     } else {
       history.forEach(h => {
         const tr = document.createElement('tr');
+        const formattedDate = new Date(h.date).toLocaleDateString('en-MY', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
         tr.innerHTML = `
-          <td>${h.date}</td>
+          <td style="font-family:var(--font-mono); font-size:0.75rem;">${formattedDate}</td>
           <td style="text-transform:capitalize; font-weight:700; color:var(--text-primary);">${h.subject}</td>
           <td><span class="user-badge" style="text-transform:capitalize;">${h.difficulty || 'medium'}</span></td>
           <td><strong style="color:var(--primary);">${h.score}</strong></td>
