@@ -152,10 +152,22 @@ export function initAuth(onLoginSuccess) {
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
 
-      // Students use username-only logins. Map to synthetic email.
-      const email = username.includes('@') ? username : `${username.toLowerCase()}@student.nexxbit.io`;
-
+      let email = username;
       try {
+        if (!username.includes('@')) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('email')
+            .eq('username', username.toLowerCase())
+            .single();
+          
+          if (profile && profile.email) {
+            email = profile.email;
+          } else {
+            email = `${username.toLowerCase()}@student.nexxbit.io`;
+          }
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email,
           password: password
