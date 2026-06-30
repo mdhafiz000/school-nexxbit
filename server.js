@@ -33,6 +33,9 @@ function trackUserActivity(req, activityName) {
   let lng = 101.6869;
 
   let cleanIp = ip;
+  if (cleanIp.includes(',')) {
+    cleanIp = cleanIp.split(',')[0].trim();
+  }
   if (cleanIp.includes('::ffff:')) {
     cleanIp = cleanIp.replace('::ffff:', '');
   }
