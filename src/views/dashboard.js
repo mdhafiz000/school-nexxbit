@@ -1,4 +1,5 @@
-import { state, updateState, apiRequest, syncSession } from '../state/store.js';
+import { state, updateState, syncSession } from '../state/store.js';
+import { supabase } from '../config/supabase.js';
 import { launchAssignmentQuiz } from './playground.js';
 
 let progressChartInstance = null;
@@ -546,7 +547,12 @@ export function renderTeacherDashboard() {
       const newName = prompt('Enter new classroom name:', classroom.name);
       if (newName && newName.trim() !== '') {
         try {
-          await apiRequest('/api/classrooms/edit', 'POST', { id: classroom.id, name: newName.trim() });
+          const { error } = await supabase
+            .from('classrooms')
+            .update({ name: newName.trim() })
+            .eq('id', classroom.id);
+          if (error) throw error;
+
           await syncSession();
           renderTeacherDashboard();
         } catch (err) {
@@ -559,7 +565,12 @@ export function renderTeacherDashboard() {
     card.querySelector('.delete-class-btn').addEventListener('click', () => {
       window.safeConfirm(`Are you sure you want to delete classroom: ${classroom.name}?`, async () => {
         try {
-          await apiRequest('/api/classrooms/delete', 'POST', { id: classroom.id });
+          const { error } = await supabase
+            .from('classrooms')
+            .delete()
+            .eq('id', classroom.id);
+          if (error) throw error;
+
           await syncSession();
           renderTeacherDashboard();
         } catch (err) {
@@ -688,14 +699,17 @@ export function renderTeacherDashboard() {
         tr.querySelector('.remove-student-btn').addEventListener('click', () => {
           window.safeConfirm(`Are you sure you want to remove ${std.name} from classroom: ${activeClass.name}?`, async () => {
             try {
-              // Find the student's username by looking up in state.users by full name
+              // Find the student's profile by name in state
               const studentProfile = Object.values(state.users).find(u => u.role === 'student' && u.name === std.name);
-              if (!studentProfile) throw new Error("Student username not found for " + std.name);
+              if (!studentProfile) throw new Error("Student profile not found for " + std.name);
 
-              await apiRequest('/api/classrooms/remove-student', 'POST', {
-                classroomId: activeClass.id,
-                studentUsername: studentProfile.username
-              });
+              const { error } = await supabase
+                .from('classroom_students')
+                .delete()
+                .eq('classroom_id', activeClass.id)
+                .eq('student_id', studentProfile.id);
+              if (error) throw error;
+
               await syncSession();
               renderTeacherDashboard();
             } catch (err) {

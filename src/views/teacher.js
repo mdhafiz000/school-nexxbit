@@ -1,4 +1,5 @@
-import { state, updateState, generateFriendCode, apiRequest, syncSession } from '../state/store.js';
+import { state, updateState, generateFriendCode, syncSession } from '../state/store.js';
+import { supabase } from '../config/supabase.js';
 import { generateQuestions } from '../generators/index.js';
 import { renderTeacherDashboard } from './dashboard.js';
 
@@ -35,8 +36,20 @@ export function initTeacher() {
       if (!className) return;
 
       try {
-        const res = await apiRequest('/api/classrooms', 'POST', { name: className });
-        alert(`Classroom "${className}" created! Invite code: ${res.code} 🏫`);
+        const classId = 'class-' + Date.now();
+        const inviteCode = 'C-' + generateFriendCode();
+
+        const { error } = await supabase
+          .from('classrooms')
+          .insert({
+            id: classId,
+            name: className,
+            code: inviteCode,
+            teacher_id: state.currentUser.id
+          });
+        if (error) throw error;
+
+        alert(`Classroom "${className}" created! Invite code: ${inviteCode} 🏫`);
         classForm.reset();
         if (classFormContainer) classFormContainer.style.display = 'none';
 

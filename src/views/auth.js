@@ -1,4 +1,6 @@
-import { state, updateState, setToken, syncSession, apiRequest } from '../state/store.js';
+import { state, updateState, setToken, syncSession } from '../state/store.js';
+import { supabase } from '../config/supabase.js';
+import { generateFriendCode } from '../state/store.js';
 
 export function initAuth(onLoginSuccess) {
   const loginOverlay = document.getElementById('auth-overlay');
@@ -35,7 +37,6 @@ export function initAuth(onLoginSuccess) {
     container.innerHTML = '';
 
     trustedKeys.slice(0, 4).forEach(username => {
-      // Create a default name and avatar representation since profile data is retrieved on-login
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'quick-login-avatar-btn';
@@ -58,8 +59,9 @@ export function initAuth(onLoginSuccess) {
     });
   }
 
-  // 1. Initial Session Check (sync with server)
+  // 1. Initial Session Check (sync with Supabase)
   async function checkInitialSession() {
+    if (!supabase) return;
     const activeUser = await syncSession();
     if (activeUser) {
       if (loginOverlay) loginOverlay.style.display = 'none';
@@ -111,9 +113,15 @@ export function initAuth(onLoginSuccess) {
     demoStudentBtn.addEventListener('click', async () => {
       try {
         const demoUsername = 'eilhan';
-        const res = await apiRequest('/api/login', 'POST', { username: demoUsername, password: 'abcd1234' });
+        const demoEmail = 'eilhan@student.nexxbit.io';
         
-        setToken(res.token);
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: demoEmail,
+          password: 'abcd1234'
+        });
+
+        if (error) throw error;
+        
         const activeUser = await syncSession();
         
         if (activeUser) {
@@ -132,7 +140,7 @@ export function initAuth(onLoginSuccess) {
           if (onLoginSuccess) onLoginSuccess(activeUser);
         }
       } catch (err) {
-        alert(err.message);
+        alert(err.message || 'Demo login failed');
       }
     });
   }
@@ -144,10 +152,17 @@ export function initAuth(onLoginSuccess) {
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
 
+      // Students use username-only logins. Map to synthetic email.
+      const email = username.includes('@') ? username : `${username.toLowerCase()}@student.nexxbit.io`;
+
       try {
-        const res = await apiRequest('/api/login', 'POST', { username, password });
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) throw error;
         
-        setToken(res.token);
         const activeUser = await syncSession();
 
         if (activeUser) {
@@ -166,7 +181,7 @@ export function initAuth(onLoginSuccess) {
           if (onLoginSuccess) onLoginSuccess(activeUser);
         }
       } catch (err) {
-        alert(err.message);
+        alert(err.message || 'Login failed. Please check your credentials.');
       }
     });
   }
@@ -187,7 +202,10 @@ export function initAuth(onLoginSuccess) {
 
       // Collect role-specific details
       let roleData = {};
+      let email = '';
+      
       if (role === 'student') {
+        email = `${username}@student.nexxbit.io`;
         roleData = {
           gender: document.getElementById('register-gender').value,
           parentEmail: document.getElementById('register-parent-email').value.trim()
@@ -198,6 +216,7 @@ export function initAuth(onLoginSuccess) {
           alert('Email Address is compulsory for Teachers!');
           return;
         }
+        email = teacherEmail;
         roleData = {
           email: teacherEmail
         };
@@ -207,6 +226,7 @@ export function initAuth(onLoginSuccess) {
           alert('Email Address is compulsory for Parents!');
           return;
         }
+        email = parentOwnEmail;
         roleData = {
           email: parentOwnEmail,
           parentRole: document.getElementById('register-parent-role').value
@@ -214,15 +234,27 @@ export function initAuth(onLoginSuccess) {
       }
 
       try {
-        await apiRequest('/api/register', 'POST', {
-          username,
-          fullname,
+        const { data, error } = await supabase.auth.signUp({
+          email,
           password,
-          role,
-          ...roleData
+          options: {
+            data: {
+              username,
+              name: fullname,
+              role,
+              avatar: '⭐',
+              gender: roleData.gender || 'Male',
+              parent_email: roleData.parentEmail || null,
+              school: '',
+              parent_role: roleData.parentRole || null,
+              friend_code: generateFriendCode()
+            }
+          }
         });
 
-        alert('Registration successful! Please sign in using your new credentials.');
+        if (error) throw error;
+
+        alert('Registration successful! Please sign in using your credentials.');
         
         // Auto toggle back to sign-in and pre-fill username
         if (tabSigninBtn) tabSigninBtn.click();
@@ -236,7 +268,7 @@ export function initAuth(onLoginSuccess) {
           }
         }
       } catch (err) {
-        alert(err.message);
+        alert(err.message || 'Registration failed');
       }
     });
   }
@@ -250,10 +282,11 @@ export function initAuth(onLoginSuccess) {
       if (!email || !email.trim()) return;
 
       try {
-        const res = await apiRequest('/api/forgot-password', 'POST', { email: email.trim() });
-        alert(`Success! A temporary recovery password has been generated:\n\n${res.recoveryPassword}\n\nPlease use this temporary password to log in and change your password in account settings.`);
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+        if (error) throw error;
+        alert(`Success! A password recovery link has been sent to: ${email.trim()}.\nPlease check your inbox.`);
       } catch (err) {
-        alert(err.message || "Failed to recover password.");
+        alert(err.message || "Failed to trigger password recovery.");
       }
     });
   }

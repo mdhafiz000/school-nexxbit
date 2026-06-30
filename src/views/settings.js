@@ -1,4 +1,5 @@
-import { state, updateState, apiRequest, syncSession } from '../state/store.js';
+import { state, updateState, syncSession } from '../state/store.js';
+import { supabase } from '../config/supabase.js';
 import { renderTeacherSubjectsWidgets } from './teacher.js';
 
 export function initSettings() {
@@ -82,11 +83,17 @@ export function initSettings() {
       }
 
       try {
-        await apiRequest('/api/settings/update', 'POST', {
-          fullname: name,
-          password: pass || undefined,
-          avatar: avatar
-        });
+        const { error: userError } = await supabase
+          .from('users')
+          .update({ name: name, avatar: avatar })
+          .eq('id', state.currentUser.id);
+        if (userError) throw userError;
+
+        if (pass) {
+          const { error: authError } = await supabase.auth.updateUser({ password: pass });
+          if (authError) throw authError;
+        }
+
         await syncSession();
         if (window.updateSidebarNames) {
           window.updateSidebarNames(state.currentUser);
@@ -113,11 +120,17 @@ export function initSettings() {
       }
 
       try {
-        await apiRequest('/api/settings/update', 'POST', {
-          fullname: name,
-          password: pass || undefined,
-          avatar: avatar
-        });
+        const { error: userError } = await supabase
+          .from('users')
+          .update({ name: name, avatar: avatar })
+          .eq('id', state.currentUser.id);
+        if (userError) throw userError;
+
+        if (pass) {
+          const { error: authError } = await supabase.auth.updateUser({ password: pass });
+          if (authError) throw authError;
+        }
+
         await syncSession();
         if (window.updateSidebarNames) {
           window.updateSidebarNames(state.currentUser);
@@ -144,11 +157,17 @@ export function initSettings() {
       }
 
       try {
-        await apiRequest('/api/settings/update', 'POST', {
-          fullname: name,
-          password: pass || undefined,
-          avatar: avatar
-        });
+        const { error: userError } = await supabase
+          .from('users')
+          .update({ name: name, avatar: avatar })
+          .eq('id', state.currentUser.id);
+        if (userError) throw userError;
+
+        if (pass) {
+          const { error: authError } = await supabase.auth.updateUser({ password: pass });
+          if (authError) throw authError;
+        }
+
         await syncSession();
         if (window.updateSidebarNames) {
           window.updateSidebarNames(state.currentUser);

@@ -1,4 +1,5 @@
-import { state, updateState, apiRequest, syncSession, setToken } from './state/store.js';
+import { state, updateState, syncSession, setToken } from './state/store.js';
+import { supabase } from './config/supabase.js';
 import { initAuth, showRoleSection } from './views/auth.js';
 import { initSidebar } from './views/sidebar.js';
 import { initSettings, fillSettingsFields } from './views/settings.js';
@@ -205,7 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.addEventListener('click', (e) => {
     if (e.target.id === 'auth-logout-btn') {
       e.preventDefault();
-      window.safeConfirm('Are you sure you want to log out?', () => {
+      window.safeConfirm('Are you sure you want to log out?', async () => {
+        if (supabase) {
+          await supabase.auth.signOut();
+        }
         setToken(null);
         updateState(draft => {
           draft.currentUser = null;
@@ -271,8 +275,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const res = await apiRequest('/api/classrooms/join', 'POST', { code });
-        alert(`Successfully joined classroom: ${res.name || 'new class'}! 🏫`);
+        const { data: classroom, error: classError } = await supabase
+          .from('classrooms')
+          .select('id, name')
+          .eq('code', code)
+          .single();
+        if (classError || !classroom) throw new Error('Classroom code not found!');
+
+        const { error: joinError } = await supabase
+          .from('classroom_students')
+          .insert({
+            classroom_id: classroom.id,
+            student_id: state.currentUser.id
+          });
+        if (joinError) {
+          if (joinError.code === '23505') throw new Error('You have already joined this classroom!');
+          throw joinError;
+        }
+
+        alert(`Successfully joined classroom: ${classroom.name}! 🏫`);
         codeInput.value = '';
         await syncSession();
         renderStudentDashboard();
@@ -293,8 +314,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const res = await apiRequest('/api/circle/add', 'POST', { code: rawCode });
-        alert(`Success! Added ${res.name} to your Circle! 🎉`);
+        const { data: friend, error: friendErr } = await supabase
+          .from('users')
+          .select('id, username, name')
+          .eq('friend_code', rawCode)
+          .single();
+        if (friendErr || !friend) throw new Error('Friend code not found!');
+        if (friend.id === state.currentUser.id) throw new Error('You cannot add yourself!');
+
+        const { data: profile } = await supabase
+          .from('users')
+          .select('friends')
+          .eq('id', state.currentUser.id)
+          .single();
+        
+        const friendsList = profile.friends || [];
+        if (friendsList.includes(friend.username)) throw new Error('This user is already in your Circle!');
+
+        friendsList.push(friend.username);
+        const { error: updateErr } = await supabase
+          .from('users')
+          .update({ friends: friendsList })
+          .eq('id', state.currentUser.id);
+        if (updateErr) throw updateErr;
+
+        alert(`Success! Added ${friend.name} to your Circle! 🎉`);
         document.getElementById('add-friend-code').value = '';
         await syncSession();
         renderSocialCircle();

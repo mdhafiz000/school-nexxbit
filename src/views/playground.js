@@ -1,4 +1,5 @@
-import { state, updateState, generateFriendCode, apiRequest, syncSession } from '../state/store.js';
+import { state, updateState, generateFriendCode, syncSession } from '../state/store.js';
+import { supabase } from '../config/supabase.js';
 import { generateQuestions } from '../generators/index.js';
 import { SUBJECT_REGISTRY } from '../config/subjects.js';
 
@@ -413,14 +414,36 @@ function showQuizResultsScreen(role) {
     
     (async () => {
       try {
-        await apiRequest('/api/quiz/submit', 'POST', {
-          subject: state.student.subject,
-          score: `${scoreCount}/${activeQuizQuestions.length}`,
-          accuracy: accuracy,
-          timeSpent: `${15 * activeQuizQuestions.length - timeLeft}s`,
-          status: accuracy >= 70 ? 'Passed' : 'Failed',
-          xpEarned: pointsGained
-        });
+        const { error: histError } = await supabase
+          .from('quiz_history')
+          .insert({
+            student_id: state.currentUser.id,
+            subject: state.student.subject,
+            score: `${scoreCount}/${activeQuizQuestions.length}`,
+            accuracy: accuracy,
+            time_spent: `${15 * activeQuizQuestions.length - timeLeft}s`,
+            status: accuracy >= 70 ? 'Passed' : 'Failed'
+          });
+        if (histError) throw histError;
+
+        const { data: profile } = await supabase
+          .from('users')
+          .select('xp, streak')
+          .eq('id', state.currentUser.id)
+          .single();
+        
+        const newXp = (profile.xp || 0) + pointsGained;
+        const newStreak = (profile.streak || 0) + 1;
+
+        const { error: userError } = await supabase
+          .from('users')
+          .update({
+            xp: newXp,
+            streak: newStreak
+          })
+          .eq('id', state.currentUser.id);
+        if (userError) throw userError;
+
         await syncSession();
       } catch (err) {
         console.error("Failed to submit quiz results:", err);
