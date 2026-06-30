@@ -104,8 +104,7 @@ export async function syncSession() {
       .single();
 
     if (profileError || !profile) {
-      console.error("Profile fetch failed:", profileError);
-      return null;
+      throw new Error("User profile not found. If this account was registered before the database setup, please sign up a new account.");
     }
 
     // 2. Fetch history from public.quiz_history
