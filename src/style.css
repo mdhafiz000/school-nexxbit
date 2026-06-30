@@ -1802,8 +1802,7 @@ tr:hover td {
   background: var(--bg-secondary);
   border-radius: var(--border-radius-lg);
   border: 1px solid var(--border-color);
-  max-height: 95vh;
-  overflow-y: auto;
+  margin: auto;
   font-family: var(--font-family);
   animation: fadeIn 0.3s ease;
   transition: max-width 0.3s ease;
