@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      var errDiv = document.getElementById('debug-error-box');
+      if (!errDiv) {
+        errDiv = document.createElement('div');
+        errDiv.id = 'debug-error-box';
+        errDiv.style.position = 'fixed';
+        errDiv.style.bottom = '10px';
+        errDiv.style.right = '10px';
+        errDiv.style.background = 'rgba(220, 38, 38, 0.95)';
+        errDiv.style.color = '#fff';
+        errDiv.style.padding = '10px';
+        errDiv.style.borderRadius = '5px';
+        errDiv.style.zIndex = '999999';
+        errDiv.style.fontSize = '12px';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.style.maxWidth = '400px';
+        document.body.appendChild(errDiv);
+      }
+      errDiv.innerHTML += '<div>Error: ' + message + ' at ' + source + ':' + lineno + ':' + colno + '</div>';
+    };
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MathQuest - Interactive Math Learning App</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN for modern statistics charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <!-- Login & Registration Modal Overlay -->
+  <!-- Login & Registration Modal Overlay -->
+  <div id="auth-overlay" class="auth-overlay-active" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); z-index:9999; align-items:center; justify-content:center; padding:1rem; backdrop-filter:blur(8px); overflow-y:auto;">
+    
+    <!-- Legacy Hidden Container to Prevent JS Crashes -->
+    <div style="display: none;">
+      <button id="auth-tab-login">Login</button>
+      <button id="auth-tab-register">Register</button>
+      <div id="header-user-badge">
+        <span id="header-user-avatar"></span>
+        <span id="header-user-name"></span>
+        <span id="header-user-role"></span>
+      </div>
+      <div class="role-selector-container">
+        <button class="role-btn" data-role="student">Student</button>
+        <button class="role-btn" data-role="teacher">Teacher</button>
+        <button class="role-btn" data-role="parent">Parent</button>
+      </div>
+      <div id="legacy-quick-logins-container"></div>
+      <button id="register-toggle-btn"></button>
+      <div class="role-signin-card" id="signin-card-student" data-role="student"></div>
+      <div class="role-signin-card" id="signin-card-teacher" data-role="teacher"></div>
+      <div class="role-signin-card" id="signin-card-parent" data-role="parent"></div>
+      <input type="checkbox" id="login-trust-computer" checked>
+      <label id="register-gender-label">Gender</label>
+    </div>
+
+    <div class="auth-card-compact">
+      <!-- App Branding inside Auth -->
+      <div class="auth-brand-logo">⚡</div>
+      <h1 class="auth-brand-title">school by nexxbit.io</h1>
+      <p class="auth-brand-subtitle">versatile learning portal for kids or students, teachers and parents</p>
+
+      <!-- Beta Warning Banner -->
+      <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--border-radius-sm); padding: 0.65rem 0.85rem; margin-top: 1rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.72rem; color: #f59e0b; line-height: 1.45; text-align: left;">
+        <span style="font-weight: 800; display: block; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em;">⚠️ ATTENTION // USERS BEWARE:</span>
+        This is an ongoing BETA release. Data is subject to periodic resets or upgrades as functionality is refined. Do not store sensitive or production-critical credentials.
+      </div>
+
+      <!-- Tab Selection -->
+      <div class="auth-tabs">
+        <button type="button" id="auth-tab-signin-btn" class="auth-tab-btn active">Sign In</button>
+        <button type="button" id="auth-tab-signup-btn" class="auth-tab-btn">Create Account</button>
+      </div>
+
+      <!-- 1. Sign In Form Area -->
+      <div id="login-form-area" style="display:block;">
+        <form id="login-form">
+          <!-- Hidden input to store role selection (updated dynamically by JS lookups) -->
+          <input type="hidden" id="login-role-val" value="student">
+          
+          <div class="auth-form-group">
+            <label class="auth-form-label" for="login-username">Username or Email</label>
+            <div class="auth-input-wrapper">
+              <input type="text" id="login-username" class="auth-input" placeholder="Enter username or email" required autocomplete="username">
+            </div>
+          </div>
+          
+          <div class="auth-form-group">
+            <label class="auth-form-label" for="login-password">Password</label>
+            <div class="auth-input-wrapper">
+              <input type="password" id="login-password" class="auth-input" placeholder="Enter password" required autocomplete="current-password" style="padding-right: 2.5rem;">
+              <button type="button" class="password-toggle-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; padding: 0; line-height: 1; z-index: 10;">👁️</button>
+            </div>
+          </div>
+
+          <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
+            <a href="#" id="auth-forgot-password-link" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-family: monospace; font-weight:700;">FORGOT_PASSWORD?</a>
+          </div>
+
+          <button type="submit" class="auth-btn-primary">Sign In 🚀</button>
+        </form>
+
+        <!-- Redesigned Saved Profiles (Quick Logins) Section -->
+        <div id="quick-logins-section" style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--border-color); display: none;">
+          <h4 style="font-size:0.85rem; font-weight:700; margin-bottom:0.75rem; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.05em; text-align:center;">⚡ Saved Profiles</h4>
+          <div id="quick-logins-container" style="display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap;">
+            <!-- Dynamically populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Create Account Form Area (hidden by default) -->
+      <div id="register-form-container" style="display:none;">
+        <form id="register-form">
+          
+          <!-- Role Selection (Dynamic dropdown) -->
+          <div class="auth-form-group">
+            <label class="auth-form-label" for="register-role">Account Type</label>
+            <select id="register-role" class="auth-input">
+              <option value="student">🎓 Kid / Student</option>
+              <option value="teacher">👩‍🏫 Teacher</option>
+              <option value="parent">❤️ Parent</option>
+            </select>
+          </div>
+
+          <div class="auth-form-group">
+            <label class="auth-form-label" for="register-fullname">Full Name</label>
+            <input type="text" id="register-fullname" class="auth-input" placeholder="e.g. Leo Vance" required>
+          </div>
+
+          <div class="auth-form-group">
+            <label class="auth-form-label" for="register-username">Choose Username</label>
+            <input type="text" id="register-username" class="auth-input" placeholder="e.g. leovance" required autocomplete="username">
+          </div>
+
+          <div class="auth-form-group">
+            <label class="auth-form-label" for="register-password">Password (min 8 characters)</label>
+            <div class="auth-input-wrapper">
+              <input type="password" id="register-password" class="auth-input" placeholder="Create password" required autocomplete="new-password" style="padding-right: 2.5rem;">
+              <button type="button" class="password-toggle-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; padding: 0; line-height: 1; z-index: 10;">👁️</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Role-specific fields -->
+          
+          <!-- STUDENT ONLY FIELDS -->
+          <div id="register-student-only-fields" style="display: contents;">
+            <div class="auth-form-group" id="register-gender-group">
+              <label class="auth-form-label" for="register-gender">Gender</label>
+              <select id="register-gender" class="auth-input">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+
+            <div class="auth-form-group" id="register-parent-email-group">
+              <label class="auth-form-label" for="register-parent-email">Parent Email (Optional)</label>
+              <input type="email" id="register-parent-email" class="auth-input" placeholder="parent@example.com">
+            </div>
+          </div>
+
+          <!-- TEACHER ONLY FIELDS -->
+          <div id="register-teacher-only-fields" style="display: none;">
+            <div class="auth-form-group">
+              <label class="auth-form-label" for="register-teacher-email">Email Address</label>
+              <input type="email" id="register-teacher-email" class="auth-input" placeholder="teacher@example.com">
+            </div>
+          </div>
+
+          <!-- PARENT ONLY FIELDS -->
+          <div id="register-parent-only-fields" style="display: none;">
+            <div class="auth-form-group">
+              <label class="auth-form-label" for="register-parent-own-email">Email Address</label>
+              <input type="email" id="register-parent-own-email" class="auth-input" placeholder="parent@example.com">
+            </div>
+            <div class="auth-form-group" id="register-parent-role-group">
+              <label class="auth-form-label" for="register-parent-role">Parent Role</label>
+              <select id="register-parent-role" class="auth-input">
+                <option value="father">Father</option>
+                <option value="mother">Mother</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="auth-btn-primary" style="margin-top: 1.5rem;">Register & Log In 🚀</button>
+        </form>
+      </div>
+
+       <!-- User Terms / Privacy Links & Beta Notice -->
+       <div style="margin-top: 1.5rem; text-align: center; font-family: monospace; font-size: 0.65rem; color: var(--text-muted); line-height: 1.5; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+         <div style="font-weight: 700; color: #f59e0b; margin-bottom: 0.25rem;">SYS_STATUS: BETA_RELEASE_v1.0 // DEVELOPMENT_ONGOING</div>
+         <div style="display: flex; justify-content: center; gap: 0.75rem;">
+           <a href="/legal/terms" target="_blank" style="color: var(--primary); text-decoration: none; font-weight:700;">TERMS_OF_SERVICE</a>
+           <span>|</span>
+           <a href="/legal/privacy" target="_blank" style="color: var(--primary); text-decoration: none; font-weight:700;">PRIVACY_POLICY</a>
+         </div>
+       </div>
+    </div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <header class="app-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 2rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">school by nexxbit</span>
+      </div>
+    </div>
+    
+    <!-- Top Header Right Controls (Logout & Theme Switcher) -->
+    <div style="display:flex; align-items:center; gap:1rem;">
+      <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
+        <span class="theme-icon">☀️</span>
+      </button>
+      <button id="auth-logout-btn" class="btn btn-danger btn-small" style="padding:0.4rem 0.8rem; font-weight:700;">Logout 🚪</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+    
+    <!-- ================= STUDENT ROLE SECTION ================= -->
+    <section id="student-section" class="role-section active">
+      <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="dashboard-sidebar">
+          <div class="user-summary-card">
+            <div class="avatar-placeholder">🧒</div>
+            <div class="user-details">
+              <h3 id="student-name">Leo "The Lightning"</h3>
+              <span class="user-badge tier-gold" id="student-tier">Tier: Gold Master</span>
+            </div>
+          </div>
+          
+          <nav class="sidebar-nav">
+            <button class="nav-item active" data-tab="student-dashboard">
+              <span>📊</span> Dashboard
+            </button>
+            <button class="nav-item" data-tab="student-assignments">
+              <span>📝</span> My Assignments
+            </button>
+            <button class="nav-item" data-tab="student-live-quiz">
+              <span>⚡</span> Live Quiz
+            </button>
+            <button class="nav-item" data-tab="student-my-circle">
+              <span>👥</span> My Circle
+            </button>
+            <button class="nav-item" data-tab="student-coop-quests">
+              <span>⚔️</span> Co-Op Quests
+            </button>
+            <button class="nav-item" data-tab="student-playground">
+              <span>🎮</span> Play Quiz
+            </button>
+            <button class="nav-item" data-tab="student-settings">
+              <span>⚙️</span> Quiz Settings
+            </button>
+            <button class="nav-item" data-tab="student-account">
+              <span>👤</span> Account Settings
+            </button>
+          </nav>
+
+          <!-- Join Classroom Box -->
+          <div class="join-class-box card" style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+            <h4>🏫 Join Classroom</h4>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem; text-align:center; width:100%;">Enter code from your teacher:</p>
+            <div class="join-input-row" style="width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+              <input type="text" id="join-class-code" placeholder="CODE12" style="width:100%; padding:0.5rem; text-transform:uppercase; font-weight:700; text-align:center; border-radius:var(--border-radius-sm); border:1px solid var(--border-color); background:var(--bg-primary);">
+              <button id="join-class-btn" class="btn btn-primary btn-small" style="width:100%; margin-top:0.5rem; padding:0.5rem; display:flex; align-items:center; justify-content:center; text-align:center;">Join Class</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+          <!-- Student Dashboard Tab -->
+          <div id="student-dashboard" class="tab-content active">
+            <div class="welcome-header">
+              <h1>Welcome Back, Champion! 🚀</h1>
+              <p>Keep the streak going! Ready to boost your brain today?</p>
+            </div>
+
+            <!-- Stats Overview Cards Grid -->
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-info">
+                  <span class="stat-label">Daily Streak</span>
+                  <span class="stat-value" id="student-streak">5 Days</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">✨</div>
+                <div class="stat-info">
+                  <span class="stat-label">Total Score (XP)</span>
+                  <span class="stat-value" id="student-xp">2,450 XP</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-info">
+                  <span class="stat-label">Accuracy Rate</span>
+                  <span class="stat-value" id="student-accuracy">88%</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-info">
+                  <span class="stat-label">Current Tier</span>
+                  <span class="stat-value" id="student-tier-display">Gold III</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Enrolled Classrooms Section -->
+            <div class="card" id="student-joined-classrooms-section" style="margin-top: 1.25rem;">
+              <h3>🏫 My Enrolled Classrooms</h3>
+              <div class="class-widgets-grid" id="student-classrooms-list" style="margin-top: 1rem; margin-bottom: 0; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+                <!-- Dynamically populated class cards -->
+              </div>
+            </div>
+
+            <!-- Graph and Achievements Grid -->
+            <div class="dashboard-visuals">
+              <!-- Score Trend Chart -->
+              <div class="card chart-card">
+                <h3>📈 Progress Over Time</h3>
+                <div class="chart-container">
+                  <canvas id="progressChart"></canvas>
+                </div>
+              </div>
+
+              <!-- Achievements Container -->
+              <div class="card achievements-card">
+                <h3>🏆 Badges & Achievements</h3>
+                <div class="achievements-grid" id="achievements-list">
+                  <!-- Badges populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="card history-card">
+              <h3>📜 Recent Quiz History</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Category</th>
+                      <th>Difficulty</th>
+                      <th>Score</th>
+                      <th>Accuracy</th>
+                    </tr>
+                  </thead>
+                  <tbody id="student-history-tbody">
+                    <!-- History lines populated by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Assignments Tab -->
+          <div id="student-assignments" class="tab-content">
+            <div class="welcome-header">
+              <h1>Classroom Assignments 📝</h1>
+              <p>Complete tasks set by your teachers to earn extra XP!</p>
+            </div>
+            <div class="assignments-grid-student" id="student-assignments-list">
+              <!-- Assignments list items populated by JS -->
+            </div>
+          </div>
+
+          <!-- Student Live Quiz Tab -->
+          <div id="student-live-quiz" class="tab-content">
+            <div class="welcome-header">
+              <h1>⚡ Active Live Quiz Channel</h1>
+              <p>Solve problems together with your class in real-time!</p>
+            </div>
+
+            <!-- Waiting Screen -->
+            <div class="card" id="student-live-waiting" style="text-align:center; padding:4rem 2rem;">
+              <div class="intro-graphics" style="margin: 0 auto 1.5rem auto; animation: pulse 1.5s infinite;">📡</div>
+              <h2>Waiting for Teacher...</h2>
+              <p style="color:var(--text-secondary); margin-top:0.5rem;">Your teacher hasn't started a live quiz yet. Keep this page open to join instantly when the test goes live!</p>
+            </div>
+
+            <!-- Live Quiz Active Screen -->
+            <div class="card" id="student-live-active-container" style="display:none; max-width:600px; margin:0 auto; padding:2rem;">
+              <div class="quiz-header" style="margin-bottom:1.5rem;">
+                <div class="live-status-badge">● LIVE QUIZ</div>
+                <div class="quiz-timer" id="student-live-timer" style="background:var(--warning-glow); color:var(--warning);">
+                  <span>⏱️</span> <span id="student-live-timer-val">15s</span>
+                </div>
+              </div>
+
+              <!-- Student Rank Display (shown/hidden by teacher toggle) -->
+              <div id="student-live-rank-display" class="live-rank-banner" style="display:none;">
+                <span class="rank-label">Your Rank</span>
+                <span class="rank-value" id="student-live-rank-val">#1</span>
+                <span class="rank-points" id="student-live-points-val">0 pts</span>
+              </div>
+
+              <div class="question-container" style="margin: 2rem 0; text-align:center;">
+                <span style="font-size:0.9rem; color:var(--text-muted); font-weight:700;" id="student-live-title-display">Live Question</span>
+                <div class="math-question" id="student-live-question-text" style="font-size:3rem; margin-top:0.5rem;">7 × 8 = ?</div>
+              </div>
+
+              <div class="options-grid" id="student-live-options-grid">
+                <!-- Answer buttons -->
+              </div>
+
+              <div class="feedback-toast" id="student-live-feedback-toast">
+                Answer Submitted! Waiting for next question...
+              </div>
+            </div>
+
+            <!-- Student Live Quiz Finished Screen -->
+            <div id="student-live-results" style="display:none;">
+              <div class="card" style="max-width:600px; margin:0 auto; text-align:center; padding:2.5rem;">
+                <div class="results-badge" style="margin:0 auto 1rem auto;">🏆</div>
+                <h2>Live Quiz Complete!</h2>
+                <p style="color:var(--text-secondary); margin-top:0.5rem;">Great job competing with your classmates!</p>
+
+                <div class="results-stats-row" style="justify-content:center; margin:1.5rem 0;">
+                  <div class="result-stat">
+                    <span class="res-label">Your Score</span>
+                    <span class="res-val" id="student-live-final-score">0 pts</span>
+                  </div>
+                  <div class="result-stat">
+                    <span class="res-label">Correct</span>
+                    <span class="res-val" id="student-live-final-correct">0/5</span>
+                  </div>
+                  <div class="result-stat">
+                    <span class="res-label">Final Rank</span>
+                    <span class="res-val" id="student-live-final-rank">#1</span>
+                  </div>
+                </div>
+
+                <!-- Top 5 podium -->
+                <h3 style="margin-top:1.5rem;">🥇 Top 5 Leaderboard</h3>
+                <div class="leaderboard-list" id="student-live-top5">
+                  <!-- Top 5 items -->
+                </div>
+
+                <button class="btn btn-primary" id="student-live-back-btn" style="margin-top:1.5rem;">Back to Dashboard</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student My Circle Tab (Social & Friends) -->
+          <div id="student-my-circle" class="tab-content">
+            <div class="welcome-header">
+              <h1>👥 My Circle</h1>
+              <p>Add friends, view their achievements, and climb the weekly leaderboard!</p>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; flex-wrap:wrap;">
+              <!-- Friend Activity & Leaderboard -->
+              <div>
+                <div class="card">
+                  <h3>🏆 Weekly Friends Leaderboard</h3>
+                  <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">XP earned this week. Keeps your brain active!</p>
+                  <div class="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Friend</th>
+                          <th>Weekly XP</th>
+                          <th>Streak</th>
+                          <th>Recent Milestone</th>
+                        </tr>
+                      </thead>
+                      <tbody id="friends-leaderboard-tbody">
+                        <!-- Dynamic friends rows -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="card" style="margin-top:1.5rem;">
+                  <h3>💬 Friendly Reactions & Highlights</h3>
+                  <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Cheer on your friends! Click a reaction to send positivity.</p>
+                  <div id="friends-activity-feed" style="display:flex; flex-direction:column; gap:1rem;">
+                    <!-- Activity logs go here -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Add Friend Card -->
+              <div>
+                <div class="card" style="text-align:center;">
+                  <h3>➕ Add Friend</h3>
+                  <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.25rem;">Enter your friend's 6 character invite code to add them to your Circle.</p>
+                  <div style="display:flex; flex-direction:column; gap:0.75rem; align-items:center;">
+                    <input type="text" id="add-friend-code" placeholder="" style="width:100%; padding:0.5rem; text-transform:uppercase; font-weight:700; text-align:center; border-radius:var(--border-radius-sm); border:1px solid var(--border-color); background:var(--bg-primary);">
+                    <button id="add-friend-btn" class="btn btn-primary" style="width:100%;">Add to Circle</button>
+                  </div>
+                  <div style="margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid var(--border-color);">
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Your Friend Code:</span>
+                    <h3 id="student-my-friend-code" style="color:var(--primary); margin-top:0.25rem;">FRIEND-5432</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Co-Op Quests Tab -->
+          <div id="student-coop-quests" class="tab-content">
+            <div class="welcome-header">
+              <h1>⚔️ Co-Op Quests</h1>
+              <p>Team up with friends to solve math questions and defeat bosses!</p>
+            </div>
+
+            <!-- Active Boss Card -->
+            <div class="card" id="coop-quest-active-card" style="padding:2.5rem; text-align:center; position:relative; overflow:hidden;">
+              <div id="coop-quest-boss-graphic" style="font-size:5rem; margin-bottom:1rem; animation: float 3s ease-in-out infinite;">🐲</div>
+              <h2 id="coop-quest-boss-name" style="margin-bottom:0.5rem;">Fraction Dragon</h2>
+              <div style="max-width:400px; margin:0 auto 1.5rem auto;">
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.35rem; font-weight:700;">
+                  <span>HP: <strong id="coop-quest-hp-val">800/1000</strong></span>
+                  <span style="color:var(--warning);" id="coop-quest-timer">⏱️ 120s left</span>
+                </div>
+                <div class="progress-bar-bg" style="height:14px; background:var(--bg-primary); border-radius:10px; overflow:hidden; border:1px solid var(--border-color);">
+                  <div id="coop-quest-hp-bar" style="width:80%; height:100%; background:linear-gradient(90deg, var(--danger), var(--primary)); transition: width 0.3s ease;"></div>
+                </div>
+              </div>
+
+              <!-- Party / Contributors list -->
+              <div style="margin-bottom:2rem;">
+                <h4 style="margin-bottom:0.5rem;">🛡️ Your Raid Party</h4>
+                <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap;" id="coop-quest-party">
+                  <!-- Party members damage contribution -->
+                </div>
+              </div>
+
+              <!-- Quest gameplay states -->
+              <div id="coop-quest-controls">
+                <button id="start-coop-battle-btn" class="btn btn-primary btn-large" style="padding:0.75rem 2rem; font-size:1.1rem;">Battle Boss ⚔️</button>
+              </div>
+            </div>
+
+            <!-- Active Co-Op Battle Gameplay Arena (Hidden initially) -->
+            <div class="card" id="coop-quest-battle-arena" style="display:none; max-width:600px; margin:1.5rem auto 0 auto; padding:2rem; text-align:center;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <span class="live-status-badge" style="background:var(--danger-glow); color:var(--danger);">● BOSS BATTLE</span>
+                <span id="coop-battle-timer" style="font-weight:700; color:var(--warning);">⏱️ 120s</span>
+              </div>
+              <div style="margin:2rem 0;">
+                <span style="font-size:0.85rem; color:var(--text-muted); font-weight:700;">Deals 50 damage on correct answer!</span>
+                <div class="math-question" id="coop-battle-question-text" style="font-size:3rem; margin-top:0.5rem; font-weight:800;">7 × 8 = ?</div>
+              </div>
+              <div class="options-grid" id="coop-battle-options-grid">
+                <!-- Answer buttons -->
+              </div>
+              <div class="feedback-toast" id="coop-battle-feedback-toast" style="margin-top:1rem;">
+                Dealt 50 damage!
+              </div>
+            </div>
+
+            <!-- Quest Battle Finish / Victory screens -->
+            <div class="card" id="coop-quest-finish-screen" style="display:none; text-align:center; padding:3rem 2rem; max-width:500px; margin:1.5rem auto 0 auto;">
+              <div id="coop-finish-icon" style="font-size:4.5rem; margin-bottom:1rem;">🎉</div>
+              <h2 id="coop-finish-title">Victory!</h2>
+              <p id="coop-finish-desc" style="color:var(--text-secondary); margin-top:0.5rem; margin-bottom:1.5rem;">The dragon has been defeated! Everyone in the raid party receives +200 XP!</p>
+              <button id="coop-finish-ok-btn" class="btn btn-primary" style="padding:0.6rem 2rem;">Back to Quests</button>
+            </div>
+          </div>
+
+          <!-- Student Playground Tab (The Quiz itself) -->
+          <div id="student-playground" class="tab-content">
+            <div class="playground-container">
+              <!-- Quiz Intro Screen -->
+              <div id="quiz-intro" class="quiz-state-screen active">
+                <div class="quiz-intro-content">
+                  <div class="intro-graphics">🎮</div>
+                  <h2 id="playground-title">Math Playground</h2>
+                  <p id="playground-desc">Train your brain with quick questions. Standard config set in settings will apply!</p>
+                  <div class="settings-preview">
+                    <span>Difficulty: <strong id="preview-difficulty">Medium</strong></span>
+                    <span>Questions: <strong id="preview-count">10</strong></span>
+                    <span>Types: <strong id="preview-types">Addition, Subtraction</strong></span>
+                  </div>
+                  <button id="start-quiz-btn" class="btn btn-primary btn-large">Start Challenge! ⚡</button>
+                </div>
+              </div>
+
+              <!-- Active Quiz Screen -->
+              <div id="quiz-active" class="quiz-state-screen">
+                <div class="quiz-header">
+                  <div class="quiz-progress-wrapper">
+                    <span class="progress-text">Question <span id="current-q-num">1</span> of <span id="total-q-num">10</span></span>
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" id="quiz-progress-bar" style="width: 10%;"></div>
+                    </div>
+                  </div>
+                  <div class="quiz-timer">
+                    <span class="timer-icon">⏱️</span>
+                    <span id="quiz-timer-val">15s</span>
+                  </div>
+                </div>
+
+                <!-- The Question Display -->
+                <div class="question-container">
+                  <div class="math-question" id="math-question-text">
+                    5 × 8 = ?
+                  </div>
+                </div>
+
+                <!-- Answer Grid -->
+                <div class="options-grid" id="quiz-options-grid">
+                  <button class="option-btn" data-index="0">35</button>
+                  <button class="option-btn" data-index="1">40</button>
+                  <button class="option-btn" data-index="2">45</button>
+                  <button class="option-btn" data-index="3">48</button>
+                </div>
+
+                <!-- Visual Toast Feedback -->
+                <div class="feedback-toast" id="quiz-feedback-toast">
+                  Correct! +10 XP
+                </div>
+
+                <!-- Next Question Button -->
+                <button id="quiz-next-btn" class="btn btn-primary" style="display:none; width:100%; margin-top:1.5rem; padding:0.85rem; font-size:1.15rem; font-weight:700; border-radius:var(--border-radius-md); box-shadow:var(--shadow-md);">Next Question ➡️</button>
+              </div>
+
+              <!-- Quiz Results Screen -->
+              <div id="quiz-results" class="quiz-state-screen">
+                <div class="results-content">
+                  <div class="results-badge">🎉</div>
+                  <h2>Quiz Complete!</h2>
+                  <p>Awesome job. You completed the challenge!</p>
+                  <div class="results-stats-row">
+                    <div class="result-stat">
+                      <span class="res-label">Score</span>
+                      <span class="res-val" id="res-score">8/10</span>
+                    </div>
+                    <div class="result-stat">
+                      <span class="res-label">Accuracy</span>
+                      <span class="res-val" id="res-accuracy">80%</span>
+                    </div>
+                    <div class="result-stat">
+                      <span class="res-label">XP Gained</span>
+                      <span class="res-val" id="res-xp">+80 XP</span>
+                    </div>
+                  </div>
+                  <div class="results-actions">
+                    <button id="retry-quiz-btn" class="btn btn-secondary">Play Again</button>
+                    <button id="go-dash-btn" class="btn btn-primary">Go to Dashboard</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Settings Tab -->
+          <div id="student-settings" class="tab-content">
+            <div class="settings-container card">
+              <h2>⚙️ Quiz Configuration</h2>
+              <p class="subtitle">Customize the subject, difficulty, and topics to match your learning level.</p>
+              
+              <form id="settings-form" class="settings-form">
+                <!-- Subject Selector Widget -->
+                <div class="form-group">
+                  <label class="form-label">Select Subject</label>
+                  <div class="subject-selector-widget" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="subject-card active" data-subject="math">
+                      <span style="font-size: 2.2rem; display: block;">📐</span>
+                      <strong style="font-size: 1.05rem;">Mathematics</strong>
+                    </div>
+                    <div class="subject-card" data-subject="english">
+                      <span style="font-size: 2.2rem; display: block;">📖</span>
+                      <strong style="font-size: 1.05rem;">English Language</strong>
+                    </div>
+                  </div>
+                  <input type="hidden" id="student-subject-select" value="math">
+                </div>
+
+                <!-- Difficulty selector -->
+                <div class="form-group">
+                  <label class="form-label">Difficulty Level</label>
+                  <div class="radio-toggle-group">
+                    <label class="toggle-option">
+                      <input type="radio" name="difficulty" value="easy">
+                      <div class="option-card">
+                        <span class="lvl-icon">🌱</span>
+                        <div class="lvl-text">
+                          <strong>Easy</strong>
+                          <span>Elementary Level</span>
+                        </div>
+                      </div>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="radio" name="difficulty" value="medium" checked>
+                      <div class="option-card">
+                        <span class="lvl-icon">🚀</span>
+                        <div class="lvl-text">
+                          <strong>Medium</strong>
+                          <span>Intermediate Level</span>
+                        </div>
+                      </div>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="radio" name="difficulty" value="hard">
+                      <div class="option-card">
+                        <span class="lvl-icon">🔥</span>
+                        <div class="lvl-text">
+                          <strong>Hard</strong>
+                          <span>Advanced Level</span>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Operations Selectors (Math) -->
+                <div class="form-group" id="student-math-topics-group">
+                  <label class="form-label">Question Types (Select at least one)</label>
+                  <div class="checkbox-grid">
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="operators" value="add" checked>
+                      <span class="check-icon">➕</span> Addition
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="operators" value="subtract" checked>
+                      <span class="check-icon">➖</span> Subtraction
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="operators" value="multiply" checked>
+                      <span class="check-icon">✖️</span> Multiplication
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="operators" value="divide">
+                      <span class="check-icon">➗</span> Division
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Topics Selectors (English) -->
+                <div class="form-group" id="student-english-topics-group" style="display:none;">
+                  <label class="form-label">English Topics (Select at least one)</label>
+                  <div class="checkbox-grid">
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="english-topics" value="spelling" checked>
+                      <span class="check-icon">✏️</span> Spelling
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="english-topics" value="vocabulary" checked>
+                      <span class="check-icon">📖</span> Vocabulary
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="english-topics" value="grammar">
+                      <span class="check-icon">📝</span> Grammar
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Number of questions -->
+                <div class="form-group">
+                  <label class="form-label" style="font-weight:700;">Number of Questions</label>
+                  <div class="radio-toggle-group" style="grid-template-columns: repeat(4, 1fr);">
+                    <label class="toggle-option">
+                      <input type="radio" name="q-count" value="5">
+                      <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                        <span style="font-size:1.4rem;">🎯</span>
+                        <strong>5 Qs</strong>
+                      </div>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="radio" name="q-count" value="10" checked>
+                      <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                        <span style="font-size:1.4rem;">🚀</span>
+                        <strong>10 Qs</strong>
+                      </div>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="radio" name="q-count" value="15">
+                      <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                        <span style="font-size:1.4rem;">🔥</span>
+                        <strong>15 Qs</strong>
+                      </div>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="radio" name="q-count" value="20">
+                      <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                        <span style="font-size:1.4rem;">🏆</span>
+                        <strong>20 Qs</strong>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Timer Toggle for Teacher -->
+                <div class="form-group" id="timer-toggle-group" style="margin-top:1.5rem; display:none; align-items:center; gap:0.75rem;">
+                  <label class="form-label" style="margin-bottom:0; cursor:pointer; font-weight:700;">⏱️ Question Timer</label>
+                  <input type="checkbox" id="teacher-timer-toggle" checked style="width:20px; height:20px; cursor:pointer;">
+                  <span style="font-size:0.85rem; color:var(--text-muted);">Enable 15s countdown for questions (uncheck for teaching)</span>
+                </div>
+
+                <!-- Save settings -->
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Save Configuration & Apply 💾</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Student Account Settings Tab -->
+          <div id="student-account" class="tab-content">
+            <div class="settings-container card">
+              <h2>👤 Profile & Account Settings</h2>
+              <p class="subtitle">Manage your username, password, recovery email, and school name.</p>
+              
+              <form id="student-profile-form">
+                <div class="form-group" style="margin-bottom:1rem;">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" id="student-profile-fullname" class="form-select" required style="width:100%; padding:0.6rem; background:var(--bg-primary);">
+                </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                  <label class="form-label">New Password (At least 8 chars)</label>
+                  <div style="position:relative;">
+                    <input type="password" id="student-profile-password" class="form-select" placeholder="Leave blank to keep current password" style="width:100%; padding:0.6rem 2.2rem 0.6rem 0.6rem; background:var(--bg-primary);">
+                    <button type="button" class="password-toggle-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; padding: 0; line-height: 1; z-index: 10;">👁️</button>
+                  </div>
+                </div>
+                
+                <!-- School Name Selector -->
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                  <label class="form-label" style="font-weight:700;">School Name</label>
+                  <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                    <select id="student-profile-school-prefix" class="form-select" style="width:120px; padding:0.6rem; background:var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                      <option value="SK">SK</option>
+                      <option value="SMK">SMK</option>
+                      <option value="SJK(C)">SJK(C)</option>
+                      <option value="SJK(T)">SJK(T)</option>
+                      <option value="SMJK">SMJK</option>
+                      <option value="SRA">SRA</option>
+                      <option value="KAFA">KAFA</option>
+                      <option value="SMKA">SMKA</option>
+                      <option value="SABK">SABK</option>
+                      <option value="SBP">SBP</option>
+                      <option value="MRSM">MRSM</option>
+                      <option value="SK(P)">SK(P)</option>
+                      <option value="SMK(P)">SMK(P)</option>
+                      <option value="SK(L)">SK(L)</option>
+                      <option value="SMK(L)">SMK(L)</option>
+                      <option value="SJI">SJI</option>
+                      <option value="St.">St.</option>
+                      <option value="Convent">Convent</option>
+                    </select>
+                    <input type="text" id="student-profile-school-name" class="form-select" placeholder="e.g. Taman Melawati" style="flex:1; padding:0.6rem; background:var(--bg-primary);">
+                  </div>
+                </div>
+
+                <!-- Connected Parent Section -->
+                <div class="form-group" style="margin-bottom: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--border-color);">
+                  <h3 style="font-weight:700; font-size:1.1rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem;">
+                    <span>👨‍👩‍👦</span> Connected Parent(s)
+                  </h3>
+                  <label class="form-label" style="font-size:0.85rem; color:var(--text-secondary);">Parent's Recovery/Contact Email</label>
+                  <input type="email" id="student-profile-parentemail" class="form-select" placeholder="parent@example.com" style="width:100%; padding:0.6rem; background:var(--bg-primary);">
+                  
+                  <div style="margin-top:0.75rem;">
+                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.35rem;">Connected Parent Accounts:</span>
+                    <div id="student-connected-parents-list" style="display:flex; flex-direction:column; gap:0.5rem;">
+                      <!-- Rendered dynamically by JS -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Choose Avatar Selector -->
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                  <label class="form-label" style="font-weight:700;">Choose Avatar Icon</label>
+                  <select id="student-profile-avatar" class="form-select" style="width:100%; padding:0.6rem; background:var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                    <option value="🧒">🧒 Default Kid</option>
+                    <option value="👦">👦 Boy</option>
+                    <option value="👧">👧 Girl</option>
+                    <option value="🦊">🦊 Fox</option>
+                    <option value="🦁">🦁 Lion</option>
+                    <option value="🐱">🐱 Cat</option>
+                    <option value="🦄">🦄 Unicorn</option>
+                    <option value="⚡">⚡ Lightning Bolt</option>
+                  </select>
+                </div>
+
+                <button type="submit" class="btn btn-secondary" style="width:100%;">Save Account Changes 💾</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TEACHER ROLE SECTION ================= -->
+    <section id="teacher-section" class="role-section">
+      <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="dashboard-sidebar">
+          <div class="user-summary-card">
+            <div class="avatar-placeholder">👩‍🏫</div>
+            <div class="user-details">
+              <h3 id="teacher-name">Ms. Clara Jenkins</h3>
+              <span class="user-badge tier-teacher">Teacher Host</span>
+            </div>
+          </div>
+          
+          <nav class="sidebar-nav">
+            <button class="nav-item active" data-tab="teacher-classrooms">
+              <span>🏫</span> My Classrooms
+            </button>
+            <button class="nav-item" data-tab="teacher-assignments">
+              <span>📝</span> Assignments
+            </button>
+            <button class="nav-item" data-tab="teacher-live">
+              <span>⚡</span> Live Test
+            </button>
+            <button class="nav-item" data-tab="teacher-quiz-config">
+              <span>⚙️</span> Quiz Settings
+            </button>
+            <button class="nav-item" data-tab="teacher-playground">
+              <span>🎮</span> Play Quiz
+            </button>
+            <button class="nav-item" data-tab="teacher-checker">
+              <span>🕵️</span> Question Checker
+            </button>
+            <button class="nav-item" data-tab="teacher-account">
+              <span>👤</span> Account Settings
+            </button>
+          </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+          <!-- Classrooms Tab -->
+          <div id="teacher-classrooms" class="tab-content active">
+            <div class="teacher-header-row" style="margin-bottom:1.5rem;">
+              <div>
+                <h1>Classroom Analytics</h1>
+                <p>Monitor your active groups and target instruction where students struggle.</p>
+              </div>
+              <div>
+                <button id="add-classroom-btn" class="btn btn-primary">Add Classroom 🏫</button>
+              </div>
+            </div>
+
+            <!-- Classroom Widget Grid -->
+            <div class="class-widgets-grid" id="teacher-classrooms-grid">
+              <!-- Classroom cards widgets go here -->
+            </div>
+
+            <!-- Add Classroom Form (Initially Hidden) -->
+            <div class="card add-class-form-card" id="add-class-form-container" style="display:none; margin-bottom:1.5rem;">
+              <h3>Create New Classroom</h3>
+              <form id="create-class-form" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+                <div class="form-group">
+                  <label for="new-class-name">Classroom Name</label>
+                  <input type="text" id="new-class-name" required placeholder="Grade 5 Algebra Wizards" class="form-select" style="background:var(--bg-primary); text-align:left;">
+                </div>
+                <div style="display:flex; gap:1rem;">
+                  <button type="submit" class="btn btn-primary">Create & Generate Code</button>
+                  <button type="button" id="cancel-create-class" class="btn btn-secondary">Cancel</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Struggling Areas Banner Card -->
+            <div class="card alert-card" id="teacher-struggling-card">
+              <div class="alert-icon" id="teacher-struggling-icon">⚠️</div>
+              <div class="alert-body">
+                <h3 id="teacher-struggling-title">Primary Struggling Areas detected!</h3>
+                <p id="struggling-desc-text">In <strong>Grade 3 Math Wizards</strong>, 68% of students struggle with <strong>Multiplication (Multipliers 7-9)</strong>, followed by <strong>Basic Division</strong>.</p>
+              </div>
+            </div>
+
+            <!-- Student Roster Table -->
+            <div class="card" id="student-roster-card">
+              <h3 id="student-roster-header">Student Progress & Tier Status</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Accuracy</th>
+                      <th>Quiz Count</th>
+                      <th>Tier</th>
+                      <th>Struggling Areas</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="student-roster-tbody">
+                    <!-- Roster populated by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assignments Tab -->
+          <div id="teacher-assignments" class="tab-content">
+            <div class="teacher-header-row" style="margin-bottom:1.5rem;">
+              <div>
+                <h1>Assignments Hub</h1>
+                <p>Create, review, duplicate, and analyze custom quiz tests assigned to classrooms.</p>
+              </div>
+              <div>
+                <button id="new-assignment-btn" class="btn btn-primary">Create Assignment ➕</button>
+              </div>
+            </div>
+
+            <!-- Create/Review Assignment Container -->
+            <div class="card" id="assignment-creator-card" style="display:none; margin-bottom:1.5rem;">
+              <h2 id="assign-card-title">New Assignment Creator</h2>
+              
+              <!-- Creation Form -->
+              <form id="assignment-creation-form" class="settings-form" style="margin-top:1.5rem;">
+                <input type="hidden" id="assign-duplicate-source-id" value="">
+                
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label class="form-label" for="assign-title">Assignment Title</label>
+                  <input type="text" id="assign-title" placeholder="Weekly Challenge" required class="form-select" style="background:var(--bg-primary); text-align:left; width:100%;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label class="form-label">Subject Focus</label>
+                  <div class="subject-selector-widget assign-subject-selector" style="display: flex; gap: 1rem;">
+                    <div class="subject-card active" data-subject="math">
+                      <span style="font-size: 2rem; display: block;">📐</span>
+                      <strong style="font-size: 1rem;">Mathematics</strong>
+                    </div>
+                    <div class="subject-card" data-subject="english">
+                      <span style="font-size: 2rem; display: block;">📖</span>
+                      <strong style="font-size: 1rem;">English Language</strong>
+                    </div>
+                  </div>
+                  <input type="hidden" id="assign-subject" value="math">
+                </div>
+
+                <!-- Math topics in its own row -->
+                <div class="form-group full-width-row" id="assign-math-topics-group" style="grid-column: 1 / -1; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:0.5rem;">
+                  <label class="form-label">Math Topics (Select at least one)</label>
+
+                  <div class="checkbox-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="assign-operators" value="add" checked>
+                      <span class="check-icon">➕</span> Addition
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="assign-operators" value="subtract">
+                      <span class="check-icon">➖</span> Subtraction
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="assign-operators" value="multiply" checked>
+                      <span class="check-icon">✖️</span> Multiplication
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="assign-operators" value="divide">
+                      <span class="check-icon">➗</span> Division
+                    </label>
+                  </div>
+                </div>
+
+                <!-- English topics in its own row -->
+                <div class="form-group full-width-row" id="assign-english-topics-group" style="grid-column: 1 / -1; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:0.5rem; display:none;">
+                  <label class="form-label">English Topics (Select at least one)</label>
+                  
+                  <div class="checkbox-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="assign-english-topics" value="spelling" checked>
+                      <span class="check-icon">✏️</span> Spelling
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="assign-english-topics" value="vocabulary" checked>
+                      <span class="check-icon">📖</span> Vocabulary
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="assign-english-topics" value="grammar">
+                      <span class="check-icon">📝</span> Grammar
+                    </label>
+                  </div>
+                </div>
+
+                <div class="radio-toggle-group" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));">
+                  <div class="form-group">
+                    <label class="form-label" for="assign-class">Target Classroom</label>
+                    <select id="assign-class" class="form-select"></select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="assign-q-count">Number of Questions</label>
+                    <select id="assign-q-count" class="form-select">
+                      <option value="5">5 Questions</option>
+                      <option value="10" selected>10 Questions</option>
+                      <option value="15">15 Questions</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="radio-toggle-group" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));">
+                  <div class="form-group">
+                    <label class="form-label" for="assign-difficulty">Difficulty Level</label>
+                    <select id="assign-difficulty" class="form-select">
+                      <option value="easy">Easy (Ages 7-8)</option>
+                      <option value="medium" selected>Medium (Ages 9-10)</option>
+                      <option value="hard">Hard (Ages 11-12)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="assign-due-date">Submission Date</label>
+                    <input type="date" id="assign-due-date" required class="form-select" style="background:var(--bg-primary);">
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Generate Question Set ⚙️</button>
+              </form>
+
+              <!-- Question Review & Approval Section -->
+              <div id="assignment-review-section" style="display:none; margin-top:2rem; border-top:1px solid var(--border-color); padding-top:1.5rem;">
+                <h3>📋 Question Set Review</h3>
+                <p class="subtitle" style="font-size:0.85rem;">Scroll and review the generated list. Tick the checkbox on any question you wish to regenerate, then click Regenerate Selected.</p>
+                
+                <!-- Scrollable grid of cards -->
+                <div class="review-questions-scroll-grid" id="assign-review-grid">
+                  <!-- JS generated question review cards -->
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:1.5rem; flex-wrap:wrap; gap:1rem;">
+                  <button id="regenerate-selected-btn" class="btn btn-secondary">🔄 Regenerate Selected</button>
+                  <div style="display:flex; gap:1rem;">
+                    <button id="cancel-assignment-btn" class="btn btn-secondary">Cancel</button>
+                    <button id="approve-assignment-btn" class="btn btn-primary" style="background:var(--success);">Approve & Send to Classroom ✅</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing Assignments List / Roster Status & Duplicate -->
+            <div class="card">
+              <h3>Active Assignments</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Assignment Title</th>
+                      <th>Classroom</th>
+                      <th>Due Date</th>
+                      <th>Completed</th>
+                      <th>Average Score</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="teacher-assignments-tbody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Detailed Assignment Roster Breakdown & Comparison View -->
+            <div class="card" id="assignment-details-card" style="display:none; margin-top:1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+                <h3 id="details-assignment-title">Assignment Performance</h3>
+                <button id="close-details-btn" class="btn btn-secondary">Close Report</button>
+              </div>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Student Name</th>
+                      <th>Completion Status</th>
+                      <th>Submission Score</th>
+                      <th>Accuracy</th>
+                    </tr>
+                  </thead>
+                  <tbody id="assignment-details-tbody">
+                    <!-- Roster data -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Test Tab -->
+          <div id="teacher-live" class="tab-content">
+            <div class="teacher-header-row" style="margin-bottom:1.5rem;">
+              <div>
+                <h1>Live Test Controller</h1>
+                <p>Build, manage, and broadcast real-time quiz challenges to active classrooms.</p>
+              </div>
+              <div>
+                <button id="new-live-test-btn" class="btn btn-primary">Create Live Test ➕</button>
+              </div>
+            </div>
+
+            <!-- Live Test Creation Form -->
+            <div class="card" id="live-test-creator-card" style="display:none; margin-bottom:1.5rem;">
+              <h2>New Live Test Builder</h2>
+              <form id="live-test-creation-form" class="settings-form" style="margin-top:1.5rem;">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label class="form-label" for="live-title">Live Test Title</label>
+                  <input type="text" id="live-title" placeholder="Live Quiz Blitz" required class="form-select" style="background:var(--bg-primary); text-align:left; width:100%;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label class="form-label">Subject Focus</label>
+                  <div class="subject-selector-widget live-subject-selector" style="display: flex; gap: 1rem;">
+                    <div class="subject-card active" data-subject="math">
+                      <span style="font-size: 2rem; display: block;">📐</span>
+                      <strong style="font-size: 1rem;">Mathematics</strong>
+                    </div>
+                    <div class="subject-card" data-subject="english">
+                      <span style="font-size: 2rem; display: block;">📖</span>
+                      <strong style="font-size: 1rem;">English Language</strong>
+                    </div>
+                  </div>
+                  <input type="hidden" id="live-subject" value="math">
+                </div>
+
+                <!-- Math topics in its own row -->
+                <div class="form-group full-width-row" id="live-math-topics-group" style="grid-column: 1 / -1; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:0.5rem;">
+                  <label class="form-label">Math Topics</label>
+
+                  <div class="checkbox-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="live-operators" value="add" checked>
+                      <span class="check-icon">➕</span> Addition
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="live-operators" value="subtract">
+                      <span class="check-icon">➖</span> Subtraction
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="live-operators" value="multiply" checked>
+                      <span class="check-icon">✖️</span> Multiplication
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="live-operators" value="divide">
+                      <span class="check-icon">➗</span> Division
+                    </label>
+                  </div>
+                </div>
+
+                <!-- English topics in its own row -->
+                <div class="form-group full-width-row" id="live-english-topics-group" style="grid-column: 1 / -1; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:0.5rem; display:none;">
+                  <label class="form-label">English Topics (Select at least one)</label>
+                  
+                  <div class="checkbox-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="live-english-topics" value="spelling" checked>
+                      <span class="check-icon">✏️</span> Spelling
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="live-english-topics" value="vocabulary" checked>
+                      <span class="check-icon">📖</span> Vocabulary
+                    </label>
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="live-english-topics" value="grammar">
+                      <span class="check-icon">📝</span> Grammar
+                    </label>
+                  </div>
+                </div>
+
+                <div class="radio-toggle-group" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));">
+                  <div class="form-group">
+                    <label class="form-label" for="live-class-select">Target Classroom</label>
+                    <select id="live-class-select" class="form-select"></select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="live-q-count">Number of Questions</label>
+                    <select id="live-q-count" class="form-select">
+                      <option value="5" selected>5 Questions</option>
+                      <option value="10">10 Questions</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="live-difficulty">Difficulty Level</label>
+                    <select id="live-difficulty" class="form-select">
+                      <option value="easy">Easy (Ages 7-8)</option>
+                      <option value="medium" selected>Medium (Ages 9-10)</option>
+                      <option value="hard">Hard (Ages 11-12)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Generate Test Questions ⚡</button>
+              </form>
+
+              <!-- Review & Save Live Test -->
+              <div id="live-test-review-section" style="display:none; margin-top:2rem; border-top:1px solid var(--border-color); padding-top:1.5rem;">
+                <h3>📋 Question Review</h3>
+                <div class="review-questions-scroll-grid" id="live-review-grid"></div>
+                <div style="display:flex; justify-content:space-between; margin-top:1.5rem; flex-wrap:wrap; gap:1rem;">
+                  <button id="live-regenerate-selected-btn" class="btn btn-secondary">🔄 Regenerate Selected</button>
+                  <div style="display:flex; gap:1rem;">
+                    <button type="button" id="cancel-live-creation-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="button" id="save-live-test-btn" class="btn btn-primary" style="background:var(--success);">Save Live Test Set 💾</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Saved Live Tests Table -->
+            <div class="card" id="saved-live-tests-container">
+              <h3>Saved Live Tests</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Test Title</th>
+                      <th>Classroom</th>
+                      <th>Questions</th>
+                      <th>Difficulty</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="saved-live-tests-tbody">
+                    <!-- Dynamic Saved Tests list -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Completed Live Tests History -->
+            <div class="card" id="completed-live-tests-container" style="margin-top:1.5rem;">
+              <h3>📋 Completed Test History</h3>
+              <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Review past live test results and student performance reports.</p>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Test Title</th>
+                      <th>Classroom</th>
+                      <th>Date</th>
+                      <th>Participants</th>
+                      <th>Top Student</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="completed-live-tests-tbody">
+                    <!-- Dynamic completed tests list -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Live Simulator Board Screen -->
+            <div class="card" id="live-active" style="display:none;">
+              <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <div>
+                  <div class="live-status-badge" id="live-streaming-indicator">● LIVE STREAMING</div>
+                  <h3 style="margin-top:0.5rem;" id="live-active-title">Addition & Subtraction Blitz</h3>
+                </div>
+                <!-- Control Buttons row -->
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <label class="checkbox-card" style="padding:0.5rem 0.75rem; font-size:0.8rem; gap:0.35rem; border-radius:var(--border-radius-sm);">
+                    <input type="checkbox" id="live-show-rank-toggle" checked> Show Rank to Students
+                  </label>
+                  <button id="live-control-play-btn" class="btn btn-primary" style="background:var(--success);">▶ Resume</button>
+                  <button id="live-control-pause-btn" class="btn btn-secondary">⏸ Pause</button>
+                  <button id="live-control-end-btn" class="btn btn-danger">⏹ End Broadcast</button>
+                </div>
+              </div>
+
+              <!-- Question details -->
+              <div class="card" style="margin-bottom:1.5rem; border-color:var(--primary); text-align:center; padding:1.5rem;">
+                <span style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Active Live Question <span id="live-q-index-disp">1</span>/<span id="live-q-total-disp">5</span>:</span>
+                <h2 id="live-question-text" style="font-size:3rem; margin-top:0.5rem;">7 × 8 = ?</h2>
+              </div>
+
+              <div class="live-feed-grid">
+                <!-- Left side: Live students responses log -->
+                <div class="feed-logs card">
+                  <h3>Student Activity Feed</h3>
+                  <div class="feed-list" id="live-feed-list">
+                    <!-- Live updates go here -->
+                  </div>
+                </div>
+
+                <!-- Right side: Realtime answering accuracy ratio -->
+                <div class="accuracy-metrics card">
+                  <h3>Real-time Accuracy</h3>
+                  <div class="circle-chart-container">
+                    <!-- SVG dynamic circle chart -->
+                    <svg width="120" height="120" viewBox="0 0 120 120" class="circle-svg">
+                      <circle cx="60" cy="60" r="50" class="bg-circle" />
+                      <circle cx="60" cy="60" r="50" class="fg-circle" id="live-accuracy-circle" stroke-dasharray="314.16" stroke-dashoffset="314.16" />
+                    </svg>
+                    <div class="circle-val" id="live-accuracy-val">0%</div>
+                  </div>
+                  <div class="bar-stats">
+                    <div class="bar-stat-row">
+                      <span>Submitted Answers:</span>
+                      <strong id="live-submit-count">0 / 0</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Leaderboard Table -->
+              <div class="card" style="margin-top:1.5rem;">
+                <h3>🏆 Live Leaderboard</h3>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Faster correct answers earn more points (max 1000 pts per question). Speed matters!</p>
+                <div class="table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Student</th>
+                        <th>Points</th>
+                        <th>Correct</th>
+                        <th>Streak</th>
+                      </tr>
+                    </thead>
+                    <tbody id="live-leaderboard-tbody">
+                      <!-- Dynamic leaderboard rows -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Teacher Post-Quiz Report Screen -->
+            <div class="card" id="live-post-report" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+                <div>
+                  <h2>📊 Live Quiz Report</h2>
+                  <p style="color:var(--text-secondary);" id="live-report-subtitle">Performance breakdown for completed live quiz.</p>
+                </div>
+                <button id="close-live-report-btn" class="btn btn-secondary">Close Report</button>
+              </div>
+
+              <!-- Top 5 Podium -->
+              <div style="margin-bottom:2rem;">
+                <h3>🥇 Top 5 Students</h3>
+                <div class="leaderboard-list" id="teacher-live-top5">
+                  <!-- Top 5 podium items -->
+                </div>
+              </div>
+
+              <!-- Full Results Table -->
+              <h3>All Student Results</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Student</th>
+                      <th>Points</th>
+                      <th>Correct / Total</th>
+                      <th>Accuracy</th>
+                    </tr>
+                  </thead>
+                  <tbody id="live-report-tbody">
+                    <!-- Full report rows -->
+                  </tbody>
+                </table>
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- Teacher Play Quiz Settings Tab -->
+        <div id="teacher-quiz-config" class="tab-content card">
+          <h2>⚙️ Quiz Presentation Settings</h2>
+          <p class="subtitle">Customize the subject, difficulty, and question parameters for your smart board session.</p>
+          
+          <form id="teacher-settings-form" class="settings-form" style="margin-top: 1rem;">
+            <!-- Subject Selector Widget -->
+            <div class="form-group">
+              <label class="form-label">Select Subject</label>
+              <div class="subject-selector-widget teacher-quiz-subject-selector" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <div class="subject-card active" data-subject="math">
+                  <span style="font-size: 2.2rem; display: block;">📐</span>
+                  <strong style="font-size: 1.05rem;">Mathematics</strong>
+                </div>
+                <div class="subject-card" data-subject="english">
+                  <span style="font-size: 2.2rem; display: block;">📖</span>
+                  <strong style="font-size: 1.05rem;">English Language</strong>
+                </div>
+              </div>
+              <input type="hidden" id="teacher-student-subject-select" value="math">
+            </div>
+
+            <!-- Difficulty selector -->
+            <div class="form-group">
+              <label class="form-label">Difficulty Level</label>
+              <div class="radio-toggle-group">
+                <label class="toggle-option">
+                  <input type="radio" name="teacher-difficulty" value="easy">
+                  <div class="option-card">
+                    <span class="lvl-icon">🌱</span>
+                    <div class="lvl-text">
+                      <strong>Easy</strong>
+                      <span>Elementary Level</span>
+                    </div>
+                  </div>
+                </label>
+                <label class="toggle-option">
+                  <input type="radio" name="teacher-difficulty" value="medium" checked>
+                  <div class="option-card">
+                    <span class="lvl-icon">🚀</span>
+                    <div class="lvl-text">
+                      <strong>Medium</strong>
+                      <span>Intermediate Level</span>
+                    </div>
+                  </div>
+                </label>
+                <label class="toggle-option">
+                  <input type="radio" name="teacher-difficulty" value="hard">
+                  <div class="option-card">
+                    <span class="lvl-icon">🔥</span>
+                    <div class="lvl-text">
+                      <strong>Hard</strong>
+                      <span>Advanced Level</span>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Operations Selectors (Math) -->
+            <div class="form-group" id="teacher-student-math-topics-group">
+              <label class="form-label">Question Types (Select at least one)</label>
+              <div class="checkbox-grid">
+                <label class="checkbox-card">
+                  <input type="checkbox" name="teacher-operators" value="add" checked>
+                  <span class="check-icon">➕</span> Addition
+                </label>
+                <label class="checkbox-card">
+                  <input type="checkbox" name="teacher-operators" value="subtract" checked>
+                  <span class="check-icon">➖</span> Subtraction
+                </label>
+                <label class="checkbox-card">
+                  <input type="checkbox" name="teacher-operators" value="multiply" checked>
+                  <span class="check-icon">✖️</span> Multiplication
+                </label>
+                <label class="checkbox-card">
+                  <input type="checkbox" name="teacher-operators" value="divide">
+                  <span class="check-icon">➗</span> Division
+                </label>
+              </div>
+            </div>
+
+            <!-- Topics Selectors (English) -->
+            <div class="form-group" id="teacher-student-english-topics-group" style="display:none;">
+              <label class="form-label">English Topics (Select at least one)</label>
+              <div class="checkbox-grid">
+                <label class="checkbox-card">
+                  <input type="checkbox" name="teacher-english-topics" value="spelling" checked>
+                  <span class="check-icon">✏️</span> Spelling
+                </label>
+                <label class="checkbox-card">
+                  <input type="checkbox" name="teacher-english-topics" value="vocabulary" checked>
+                  <span class="check-icon">📖</span> Vocabulary
+                </label>
+                <label class="checkbox-card">
+                  <input type="checkbox" name="teacher-english-topics" value="grammar">
+                  <span class="check-icon">📝</span> Grammar
+                </label>
+              </div>
+            </div>
+
+            <!-- Number of questions -->
+            <div class="form-group">
+              <label class="form-label" style="font-weight:700;">Number of Questions</label>
+              <div class="radio-toggle-group" style="grid-template-columns: repeat(4, 1fr);">
+                <label class="toggle-option">
+                  <input type="radio" name="teacher-q-count" value="5">
+                  <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                    <span style="font-size:1.4rem;">🎯</span>
+                    <strong>5 Qs</strong>
+                  </div>
+                </label>
+                <label class="toggle-option">
+                  <input type="radio" name="teacher-q-count" value="10" checked>
+                  <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                    <span style="font-size:1.4rem;">🚀</span>
+                    <strong>10 Qs</strong>
+                  </div>
+                </label>
+                <label class="toggle-option">
+                  <input type="radio" name="teacher-q-count" value="15">
+                  <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                    <span style="font-size:1.4rem;">🔥</span>
+                    <strong>15 Qs</strong>
+                  </div>
+                </label>
+                <label class="toggle-option">
+                  <input type="radio" name="teacher-q-count" value="20">
+                  <div class="option-card" style="padding:0.75rem; justify-content:center; align-items:center; flex-direction:column; text-align:center; gap:0.25rem;">
+                    <span style="font-size:1.4rem;">🏆</span>
+                    <strong>20 Qs</strong>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Timer Toggle for Teacher -->
+            <div class="form-group" id="teacher-timer-toggle-group" style="margin-top:1.5rem; display:flex; align-items:center; gap:0.75rem;">
+              <label class="form-label" style="margin-bottom:0; cursor:pointer; font-weight:700;">⏱️ Question Timer</label>
+              <input type="checkbox" id="teacher-timer-toggle" checked style="width:20px; height:20px; cursor:pointer;">
+              <span style="font-size:0.85rem; color:var(--text-muted);">Enable 15s countdown for questions (uncheck for teaching)</span>
+            </div>
+
+            <!-- Save settings -->
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Save Configuration & Apply 💾</button>
+          </form>
+        </div>
+
+        <!-- Teacher Playground Tab (Smart Board Presentation Quiz) -->
+        <div id="teacher-playground" class="tab-content">
+          <div class="playground-container">
+            <!-- Quiz Intro Screen -->
+            <div id="teacher-quiz-intro" class="quiz-state-screen active">
+              <div class="quiz-intro-content">
+                <div class="intro-graphics">🎮</div>
+                <h2 id="teacher-playground-title">Classroom Quiz Presentation</h2>
+                <p id="teacher-playground-desc">Present a live practice session to the class on the smart board. Configure topics in Quiz Settings.</p>
+                <div class="settings-preview">
+                  <span>Difficulty: <strong id="teacher-preview-difficulty">Medium</strong></span>
+                  <span>Questions: <strong id="teacher-preview-count">10</strong></span>
+                  <span>Types: <strong id="teacher-preview-types">Addition, Subtraction</strong></span>
+                </div>
+                <button id="teacher-start-quiz-btn" class="btn btn-primary btn-large">Start Presentation Challenge! ⚡</button>
+              </div>
+            </div>
+
+            <!-- Active Quiz Screen -->
+            <div id="teacher-quiz-active" class="quiz-state-screen">
+              <div class="quiz-header">
+                <div class="quiz-progress-wrapper">
+                  <span class="progress-text">Question <span id="teacher-current-q-num">1</span> of <span id="teacher-total-q-num">10</span></span>
+                  <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="teacher-quiz-progress-bar" style="width: 10%;"></div>
+                  </div>
+                </div>
+                <div class="quiz-timer">
+                  <span class="timer-icon">⏱️</span>
+                  <span id="teacher-quiz-timer-val">15s</span>
+                </div>
+              </div>
+
+              <!-- The Question Display -->
+              <div class="question-container">
+                <div class="math-question" id="teacher-math-question-text">
+                  5 × 8 = ?
+                </div>
+              </div>
+
+              <!-- Answer Grid -->
+              <div class="options-grid" id="teacher-quiz-options-grid">
+                <!-- Populated dynamically -->
+              </div>
+
+              <!-- Visual Toast Feedback -->
+              <div class="feedback-toast" id="teacher-quiz-feedback-toast">
+                Correct!
+              </div>
+
+              <!-- Next Question Button -->
+              <button id="teacher-quiz-next-btn" class="btn btn-primary" style="display:none; width:100%; margin-top:1.5rem; padding:0.85rem; font-size:1.15rem; font-weight:700; border-radius:var(--border-radius-md); box-shadow:var(--shadow-md);">Next Question ➡️</button>
+            </div>
+
+            <!-- Quiz Results Screen -->
+            <div id="teacher-quiz-results" class="quiz-state-screen">
+              <div class="results-content">
+                <div class="results-badge">🎉</div>
+                <h2>Presentation Complete!</h2>
+                <p>Great job practicing together as a classroom!</p>
+                <div class="results-stats">
+                  <div class="stat-card">
+                    <span class="stat-label">Final Score</span>
+                    <strong id="teacher-res-score">8/10</strong>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-label">Class Accuracy</span>
+                    <strong id="teacher-res-accuracy">80%</strong>
+                  </div>
+                </div>
+                <div style="margin-top:1.5rem;">
+                  <button id="teacher-finish-quiz-btn" class="btn btn-primary" style="width:100%;">Return to Presentation Lobby</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teacher Question Checker & Collaboration Queue Tab -->
+        <div id="teacher-checker" class="tab-content card">
+          <h2>🕵️ AI Question Verification & Collaboration</h2>
+          <p class="subtitle">Review and verify fact-based questions generated by the AI engine. Collect Contribution Points to top the leaderboard!</p>
+          
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; margin-top:1.5rem;">
+            <!-- Left Panel: Verification Pool -->
+            <div style="display:flex; flex-direction:column; gap:1.5rem;">
+              <!-- Contribution Stats Bar -->
+              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; background:var(--bg-primary); border: 1px solid var(--border-color); border-radius:var(--border-radius-md); padding:1rem;">
+                <div style="text-align:center;">
+                  <span style="font-size:0.8rem; color:var(--text-muted); display:block; font-weight:700;">CONTRIBUTION XP</span>
+                  <strong id="teacher-contrib-xp" style="font-size:1.6rem; color:var(--warning); font-weight:800;">450 XP</strong>
+                </div>
+                <div style="text-align:center; border-left:1px solid var(--border-color); border-right:1px solid var(--border-color);">
+                  <span style="font-size:0.8rem; color:var(--text-muted); display:block; font-weight:700;">QUESTIONS VERIFIED</span>
+                  <strong id="teacher-verified-count" style="font-size:1.6rem; color:var(--success); font-weight:800;">12</strong>
+                </div>
+                <div style="text-align:center;">
+                  <span style="font-size:0.8rem; color:var(--text-muted); display:block; font-weight:700;">CONTRIBUTOR RANK</span>
+                  <strong id="teacher-contrib-rank" style="font-size:1.4rem; color:var(--primary); font-weight:800;">#3 (Master)</strong>
+                </div>
+              </div>
+
+              <!-- AI Generator Control -->
+              <div style="background:var(--primary-glow); border:1px solid var(--primary-border); border-radius:var(--border-radius-md); padding:1rem; display:flex; align-items:center; gap:0.75rem;">
+                <span style="font-size:1.6rem;">🟢</span>
+                <div>
+                  <h4 style="font-weight:700; margin-bottom:0.15rem; font-size:0.9rem;">Queue Status: Synchronized (Admin Managed)</h4>
+                  <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:0;">New question batches are automatically distributed by administrators to optimize token budgets.</p>
+                </div>
+              </div>
+
+              <!-- Pending Pool -->
+              <div>
+                <h3 style="font-weight:700; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between;">
+                  <span>📥 Pending Questions Pool</span>
+                  <span class="user-badge" id="pending-q-count" style="background:var(--primary-glow); color:var(--primary); font-weight:800; font-size:0.85rem;">0 Pending</span>
+                </h3>
+                <div id="pending-questions-container" style="display:flex; flex-direction:column; gap:1rem;">
+                  <!-- Dynamic pending cards -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel: Leaderboard -->
+            <div>
+              <div class="card" style="background:var(--bg-primary); border:1px solid var(--border-color); border-radius:var(--border-radius-md); padding:1.25rem;">
+                <h3 style="font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+                  <span>🏆</span> Top Contributors
+                </h3>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">Weekly leaderboard of teachers reviewing AI questions.</p>
+                
+                <div id="teacher-leaderboard-list" style="display:flex; flex-direction:column; gap:0.75rem;">
+                  <!-- Leaderboard Rows -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teacher Account Settings Tab -->
+        <div id="teacher-account" class="tab-content card">
+          <h2>👤 Profile & Account Settings</h2>
+          <p class="subtitle" style="margin-bottom:1.5rem;">Update your name, password, and school name details.</p>
+          
+          <form id="teacher-profile-form">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label class="form-label">Teacher Display Name</label>
+              <input type="text" id="teacher-profile-fullname" class="form-select" required style="width:100%; padding:0.6rem; background:var(--bg-primary);">
+            </div>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label class="form-label">New Password (At least 8 chars)</label>
+              <div style="position:relative;">
+                <input type="password" id="teacher-profile-password" class="form-select" placeholder="Leave blank to keep current password" style="width:100%; padding:0.6rem 2.2rem 0.6rem 0.6rem; background:var(--bg-primary);">
+                <button type="button" class="password-toggle-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; padding: 0; line-height: 1; z-index: 10;">👁️</button>
+              </div>
+            </div>
+            
+            <!-- Teacher School Section -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label class="form-label" style="font-weight: 700;">School Name</label>
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                <select id="teacher-profile-school-prefix" class="form-select" style="width:120px; padding:0.6rem; background:var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                  <option value="SK">SK</option>
+                  <option value="SMK">SMK</option>
+                  <option value="SJK(C)">SJK(C)</option>
+                  <option value="SJK(T)">SJK(T)</option>
+                  <option value="SMJK">SMJK</option>
+                  <option value="SRA">SRA</option>
+                  <option value="KAFA">KAFA</option>
+                  <option value="SMKA">SMKA</option>
+                  <option value="SABK">SABK</option>
+                  <option value="SBP">SBP</option>
+                  <option value="MRSM">MRSM</option>
+                  <option value="SK(P)">SK(P)</option>
+                  <option value="SMK(P)">SMK(P)</option>
+                  <option value="SK(L)">SK(L)</option>
+                  <option value="SMK(L)">SMK(L)</option>
+                  <option value="SJI">SJI</option>
+                  <option value="St.">St.</option>
+                  <option value="Convent">Convent</option>
+                </select>
+                <input type="text" id="teacher-profile-school-name" class="form-select" placeholder="e.g. Taman Melawati" style="flex:1; padding:0.6rem; background:var(--bg-primary);">
+            </div>
+            </div>
+
+            <!-- Choose Avatar Selector -->
+            <div class="form-group" style="margin-bottom:1.5rem; max-width: 600px;">
+              <label class="form-label" style="font-weight:700;">Choose Avatar Icon</label>
+              <select id="teacher-profile-avatar" class="form-select" style="width:100%; padding:0.6rem; background:var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                <option value="👩‍🏫">👩‍🏫 Teacher (Female)</option>
+                <option value="👨‍🏫">👨‍🏫 Teacher (Male)</option>
+                <option value="👩">👩 Female Admin</option>
+                <option value="👨">👨 Male Admin</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-secondary" style="width:100%; margin-top:1rem;">Save Profile Changes 💾</button>
+          </form>
+
+          <hr style="margin: 2.5rem 0 2rem 0; border: 0; border-top: 1px dashed var(--border-color);">
+
+          <!-- Classroom Subjects Management -->
+          <div>
+            <h3 style="font-weight: 700; margin-bottom: 0.25rem;">📚 Classroom Subjects Management</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Add and configure active subjects for your classrooms.</p>
+            
+            <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; align-items: center;">
+              <select id="teacher-add-subject-select" class="form-select" style="flex: 1; padding: 0.65rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                <option value="math">📐 Mathematics Focus</option>
+                <option value="english">📖 English Language Focus</option>
+              </select>
+              <button type="button" id="teacher-add-subject-btn" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight:700;">Add Subject ➕</button>
+            </div>
+
+            <!-- Grid of added subject widgets -->
+            <div id="teacher-subjects-widgets-container" class="teacher-subjects-grid">
+              <!-- Dynamically populated by JS -->
+            </div>
+          </div>
+        </div>
+          </div>
+        </div>
+      </section>
+
+    <!-- ================= PARENT ROLE SECTION ================= -->
+    <section id="parent-section" class="role-section">
+      <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="dashboard-sidebar">
+          <div class="user-summary-card">
+            <div class="avatar-placeholder">❤️</div>
+            <div class="user-details">
+              <h3 id="parent-name">Robert & Sarah Vance</h3>
+              <span class="user-badge tier-parent">Parent Account</span>
+            </div>
+          </div>
+          
+          <nav class="sidebar-nav">
+            <button class="nav-item active" data-tab="parent-dashboard">
+              <span>👶</span> Child Dashboard
+            </button>
+            <button class="nav-item" data-tab="parent-settings">
+              <span>⚙️</span> Children Management
+            </button>
+            <button class="nav-item" data-tab="parent-account">
+              <span>👤</span> Account Settings
+            </button>
+          </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+          <!-- Parent Dashboard Tab -->
+          <div id="parent-dashboard" class="tab-content active">
+            <div class="parent-header">
+              <h1>Child Progress Monitor</h1>
+              <p>Observe learning insights, history, and target support areas.</p>
+            </div>
+
+            <!-- Children selection cards -->
+            <div class="children-selector">
+              <button class="child-profile-card active" data-child="leo">
+                <span class="avatar">👦</span>
+                <div class="details">
+                  <strong>Leo Vance</strong>
+                  <span>Grade 3 Student</span>
+                </div>
+              </button>
+              <button class="child-profile-card" data-child="lucy">
+                <span class="avatar">👧</span>
+                <div class="details">
+                  <strong>Lucy Vance</strong>
+                  <span>Grade 1 Student</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Focus area & performance metrics -->
+            <div class="parent-insights-grid">
+              <div class="card insights-card">
+                <h3>🧠 Learning Focus & Struggling Areas</h3>
+                <div class="struggling-items-list" id="parent-struggling-list">
+                  <!-- Stuggles listing with recommended action -->
+                </div>
+              </div>
+
+              <div class="card accuracies-card">
+                <h3>📈 Performance Breakdown</h3>
+                <div class="progress-bars-stats" id="parent-progress-stats">
+                  <!-- Topic performance sliders -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Parent Graphs Grid (Richer Graphs) -->
+            <div class="dashboard-visuals" style="margin-top: 1.5rem;">
+              <!-- Accuracy Trend -->
+              <div class="card chart-card">
+                <h3>📈 Child Accuracy Trend</h3>
+                <div class="chart-container" style="height:220px;">
+                  <canvas id="parentAccuracyChart"></canvas>
+                </div>
+              </div>
+
+              <!-- XP & Answers Volume metrics -->
+              <div class="card chart-card">
+                <h3>📊 Question Volume & XP Metrics</h3>
+                <div class="chart-container" style="height:220px;">
+                  <canvas id="parentAnalysisChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Child Activity Logs -->
+            <div class="card" style="margin-top: 1.5rem;">
+              <h3>📋 Recent Activity History</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date / Time</th>
+                      <th>Quiz Topic</th>
+                      <th>Score Result</th>
+                      <th>Time Spent</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="parent-history-tbody">
+                    <!-- History logs -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parent Settings Tab -->
+          <div id="parent-settings" class="tab-content card">
+            <h2>⚙️ Children Management</h2>
+            <p class="subtitle" style="margin-bottom:1.5rem;">Connect kid accounts to observe their learning insights and support areas.</p>
+            
+            <div style="max-width: 600px;">
+              <!-- Link Child Account Form -->
+              <div>
+                <h3>👶 Connect Child Account</h3>
+                <p class="subtitle" style="margin-bottom:1rem;">To monitor your child's progress, link their account by confirming their username and password below.</p>
+                
+                <form id="parent-link-child-form">
+                  <div class="form-group" style="margin-bottom:1rem;">
+                    <label class="form-label">Child Username</label>
+                    <input type="text" id="parent-link-child-username" class="form-select" placeholder="e.g. leo" required style="width:100%; padding:0.6rem; background:var(--bg-primary);">
+                  </div>
+                  <div class="form-group" style="margin-bottom:1.25rem;">
+                    <label class="form-label">Confirm Child Password</label>
+                    <div style="position:relative;">
+                      <input type="password" id="parent-link-child-password" class="form-select" placeholder="Enter child's password" required style="width:100%; padding:0.6rem 2.2rem 0.6rem 0.6rem; background:var(--bg-primary);">
+                      <button type="button" class="password-toggle-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; padding: 0; line-height: 1; z-index: 10;">👁️</button>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="width:100%;">Verify & Connect Child 🔗</button>
+                </form>
+
+                <!-- Linked children list -->
+                <div style="margin-top:2rem;">
+                  <h4>Connected Kids</h4>
+                  <div id="parent-connected-kids-list" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                    <!-- Connected kids profiles go here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parent Account Settings Tab -->
+          <div id="parent-account" class="tab-content card">
+            <h2>👤 Profile & Account Settings</h2>
+            <p class="subtitle" style="margin-bottom:1.5rem;">Update your display name and change your security credentials.</p>
+            
+            <form id="parent-profile-form" style="max-width: 600px;">
+              <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">Parent Display Name</label>
+                <input type="text" id="parent-profile-fullname" class="form-select" required style="width:100%; padding:0.6rem; background:var(--bg-primary);">
+              </div>
+              <div class="form-group" style="margin-bottom:1.5rem;">
+                <label class="form-label">New Password (At least 8 chars)</label>
+                <div style="position:relative;">
+                <input type="password" id="parent-profile-password" class="form-select" placeholder="Leave blank to keep current password" style="width:100%; padding:0.6rem 2.2rem 0.6rem 0.6rem; background:var(--bg-primary);">
+                <button type="button" class="password-toggle-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; padding: 0; line-height: 1; z-index: 10;">👁️</button>
+              </div>
+              </div>
+
+              <!-- Choose Avatar Selector -->
+              <div class="form-group" style="margin-bottom:1.5rem;">
+                <label class="form-label" style="font-weight:700;">Choose Avatar Icon</label>
+                <select id="parent-profile-avatar" class="form-select" style="width:100%; padding:0.6rem; background:var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                  <option value="👨">👨 Father</option>
+                  <option value="👩">👩 Mother</option>
+                  <option value="🧔">🧔 Father (Bearded)</option>
+                  <option value="👵">👵 Grandmother</option>
+                  <option value="👴">👴 Grandfather</option>
+                  <option value="❤️">❤️ Love Heart</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-secondary" style="width:100%;">Save Profile Changes 💾</button>
+            </form>
+          </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- ================= ADMIN ROLE SECTION ================= -->
+    <section id="admin-section" class="role-section">
+      <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="dashboard-sidebar">
+          <div class="user-summary-card">
+            <div class="avatar-placeholder" id="admin-avatar">⚙️</div>
+            <div class="user-details">
+              <h3 id="admin-name">Admin User</h3>
+              <span class="user-badge" style="background:rgba(236,72,153,0.15); color:#ec4899; font-weight:800;">System Admin</span>
+            </div>
+          </div>
+          
+          <nav class="sidebar-nav">
+            <button class="nav-item active" data-tab="admin-dashboard" id="sidebar-btn-admin">
+              <span>🔐</span> Admin Panel
+            </button>
+          </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+          <!-- Admin Dashboard Tab -->
+          <div id="admin-dashboard" class="tab-content active">
+            <!-- Rendered dynamically by admin.js -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- App JS Logic -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
